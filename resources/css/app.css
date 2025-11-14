@@ -1,3 +1,35 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Tema Hijau-Kuning */
+:root {
+    --color-primary: #16a34a;   /* hijau tua */
+    --color-secondary: #facc15; /* kuning cerah */
+}
+
+.bg-primary {
+    background-color: var(--color-primary);
+}
+
+.text-primary {
+    color: var(--color-primary);
+}
+
+.bg-secondary {
+    background-color: var(--color-secondary);
+}
+
+.btn-custom {
+    background-color: var(--color-primary);
+    color: white;
+    font-weight: bold;
+    border-radius: 8px;
+    padding: 0.5rem 1.25rem;
+    transition: 0.3s;
+}
+
+.btn-custom:hover {
+    background-color: var(--color-secondary);
+    color: #14532d;
+}
