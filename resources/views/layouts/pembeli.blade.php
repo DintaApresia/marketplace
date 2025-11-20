@@ -26,11 +26,6 @@
            class="{{ request()->routeIs('pembeli.orders') ? 'text-green-700 font-semibold border-b-2 border-green-700 pb-1' : 'text-gray-700 hover:text-green-700' }}">
           Orders
         </a>
-        <a href="{{ route('profile.edit') }}"
-        class="{{ request()->routeIs('profile.edit') ? 'text-green-700 font-semibold border-b-2 border-green-700 pb-1' : 'text-gray-700 hover:text-green-700' }}"
-        aria-current="{{ request()->routeIs('profile.edit') ? 'page' : '' }}">
-        Profile
-        </a>
       </nav>
 
       <div class="flex items-center gap-3">

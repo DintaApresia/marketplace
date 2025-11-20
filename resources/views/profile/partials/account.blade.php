@@ -23,21 +23,6 @@
       @error('email') <p class="text-sm text-rose-600 mt-1">{{ $message }}</p> @enderror
     </div>
 
-    {{-- Password baru (opsional) --}}
-    <div>
-      <label class="block text-sm text-gray-700">Password baru (opsional)</label>
-      <input name="password" type="password"
-             class="mt-1 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-green-600">
-      @error('password') <p class="text-sm text-rose-600 mt-1">{{ $message }}</p> @enderror
-    </div>
-
-    {{-- Konfirmasi password --}}
-    <div>
-      <label class="block text-sm text-gray-700">Konfirmasi password</label>
-      <input name="password_confirmation" type="password"
-             class="mt-1 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-green-600">
-    </div>
-
     <div class="sm:col-span-2 flex items-center justify-between">
       @if (Route::has('password.request'))
         <a href="{{ route('password.request') }}" class="text-sm text-green-700 hover:underline">

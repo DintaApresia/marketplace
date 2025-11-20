@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AuthController; // dipakai utk adminPanel & verifySeller saja
+use App\Http\Controllers\PembeliController;
 
 // Landing -> arahkan ke halaman login (Breeze)
 Route::get('/', fn () => redirect()->route('login'));
@@ -25,6 +26,9 @@ Route::middleware(['auth' /*,'verified'*/])
         Route::view('/orders',    'pembeli.orders')->name('orders');
         // NOTE: Profile cukup pakai route('profile.edit'), tidak perlu `pembeli/profile`
     });
+
+Route::get('/profile', [PembeliController::class, 'profile'])->name('profile');
+Route::post('/profile/preferensi', [PembeliController::class, 'simpanPreferensi'])->name('pembeli.preferensi');
 
 // AREA PENJUAL
 Route::middleware(['auth', 'role:penjual'])

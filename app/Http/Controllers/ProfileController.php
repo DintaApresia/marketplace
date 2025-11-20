@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;            // ✅ tambah/benarkan ini
 use Illuminate\Support\Facades\Hash;
+use App\Models\Pembeli;
 
 class ProfileController extends Controller
 {
@@ -44,4 +45,5 @@ class ProfileController extends Controller
 
         return back()->with('status','Profil diperbarui.');
     }
+
 }
