@@ -1,23 +1,28 @@
-<?php 
+<?php
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Pembeli;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class PembeliController extends Controller
 {
+    // TAMPIL HALAMAN PROFIL
     public function profile()
     {
-        $user = auth()->user();
+        $user = Auth::user();
+
+        // Ambil data pembeli user ini (bisa null kalau belum ada)
         $pembeli = Pembeli::where('idUser', $user->id)->first();
-         return view('profile', [
+
+        return view('profile', [
             'user'    => $user,
             'pembeli' => $pembeli,
         ]);
     }
 
+    // SIMPAN PREFERENSI PEMBELI
     public function simpanPreferensi(Request $request)
     {
         $user = Auth::user();
@@ -30,20 +35,24 @@ class PembeliController extends Controller
             'longitude'     => 'nullable|numeric',
         ]);
 
-        Pembeli::updateOrCreate(
-            ['idUser' => $user->id],
-            [
-                'nama_pembeli' => $validated['receiver_name'],
-                'no_telp'   => $validated['phone'],
-                'alamat'       => $validated['address_line'] ?? '',
-                'latitude'     => $validated['latitude'] ?? null,
-                'longitude'    => $validated['longitude'] ?? null,
-            ]
-        );
+        // Cari pembeli berdasarkan idUser. Kalau belum ada, buat baru.
+        $pembeli = Pembeli::where('idUser', $user->id)->first();
 
-        // balik ke halaman profile (GET) yang pakai method profile()
+        if (!$pembeli) {
+            $pembeli = new Pembeli();
+            $pembeli->idUser = $user->id;
+        }
+
+        $pembeli->nama_pembeli = $validated['receiver_name'];
+        $pembeli->no_telp      = $validated['phone'];
+        $pembeli->alamat       = $validated['address_line'] ?? '';
+        $pembeli->latitude     = $validated['latitude'] ?? null;
+        $pembeli->longitude    = $validated['longitude'] ?? null;
+
+        $pembeli->save();
+
         return redirect()
-            ->route('profile')
+            ->route('profile.edit')
             ->with('success', 'Preferensi pembeli berhasil disimpan.');
     }
 }

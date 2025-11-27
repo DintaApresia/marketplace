@@ -7,6 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\Penjual;
+//use App\Models\Order;
+
+/**
+ * @property string $role
+ * @property string|null $seller_status
+ */
 
 class User extends Authenticatable
 {
@@ -22,7 +29,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'is_verified_seller',
+        'seller_status',
     ];
 
     /**
@@ -44,4 +51,14 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function penjual()
+    {
+        return $this->hasOne(Penjual::class);
+    }
+
+   /**
+     * @property string $role
+     * @property string $seller_status
+     */
 }

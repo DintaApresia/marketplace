@@ -47,17 +47,28 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
 
-            // Jika user pembeli tapi belum diverifikasi sebagai penjual
-            if ($user->role === 'pembeli' && !$user->is_verified_seller) {
+            // Kalau admin (kalau kamu pakai role admin)
+            if ($user->role === 'admin') {
+                return redirect('/dashboard/admin');
+            }
+
+            // Kalau pembeli biasa
+            if ($user->role === 'pembeli') {
                 return redirect('/dashboard/pembeli');
             }
 
-            // Jika user penjual
-            if ($user->role === 'penjual' && $user->is_verified_seller) {
+            // Kalau penjual & SUDAH disetujui admin
+            if ($user->role === 'penjual' && $user->seller_status === 'approved') {
                 return redirect('/dashboard/penjual');
             }
 
-            // default fallback
+            // Kalau penjual tapi statusnya belum approved (pending / rejected)
+            if ($user->role === 'penjual' && $user->seller_status !== 'approved') {
+                return redirect('/profile')
+                    ->with('warning', 'Akun penjualmu belum disetujui admin.');
+            }
+
+            // fallback
             return redirect('/dashboard/pembeli');
         }
 
@@ -81,7 +92,23 @@ class AuthController extends Controller
     public function verifySeller($id)
     {
         $user = User::findOrFail($id);
-        $user->update(['is_verified_seller' => true, 'role' => 'penjual']);
+
+        $user->update([
+            'role'          => 'penjual',
+            'seller_status' => 'approved',
+        ]);
+
         return back()->with('success', 'Penjual berhasil diverifikasi.');
+    }
+
+    public function rejectSeller($id)
+    {
+        $user = User::findOrFail($id);
+
+        $user->update([
+            'seller_status' => 'rejected',
+        ]);
+
+        return back()->with('success', 'Pengajuan penjual ditolak.');
     }
 }
