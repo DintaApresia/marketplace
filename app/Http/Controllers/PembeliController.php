@@ -5,21 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Pembeli;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Produk;
 
 class PembeliController extends Controller
 {
     // TAMPIL HALAMAN PROFIL
-    public function profile()
+    public function profile(Request $request)
     {
-        $user = Auth::user();
-
-        // Ambil data pembeli user ini (bisa null kalau belum ada)
+        $user    = $request->user();
         $pembeli = Pembeli::where('idUser', $user->id)->first();
 
-        return view('profile', [
-            'user'    => $user,
-            'pembeli' => $pembeli,
-        ]);
+        return view('pembeli.profile', compact('user', 'pembeli'));
     }
 
     // SIMPAN PREFERENSI PEMBELI
@@ -52,7 +48,37 @@ class PembeliController extends Controller
         $pembeli->save();
 
         return redirect()
-            ->route('profile.edit')
+            ->route('pembeli.profile')
             ->with('success', 'Preferensi pembeli berhasil disimpan.');
     }
+
+    public function index()
+    {
+        $produk = Produk::with('penjual')   // <<-- WAJIB supaya alamat toko muncul
+                        ->where('is_active', 1)
+                        ->latest()
+                        ->get();
+
+        return view('pembeli.dashboard', compact('produk'));
+    }
+
+    public function detailProduk($id)
+    {
+         $produk = Produk::with(['user.penjual'])->findOrFail($id);
+
+        // Ambil data penjual dari relasi user → penjual
+        $penjual = $produk->user->penjual;
+
+        return view('pembeli.detailproduk', compact('produk', 'penjual'));
+    }
+
+    public function hasilPencarian(Request $request)
+    {
+        $data = json_decode($request->data, true);
+
+        return view('pembeli.hasilpencarian', [
+            'produk' => $data
+        ]);
+    }
+
 }

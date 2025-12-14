@@ -57,6 +57,18 @@ class User extends Authenticatable
         return $this->hasOne(Penjual::class);
     }
 
+    public function produks()
+    {
+        // satu user bisa punya banyak produk
+        return $this->hasMany(Produk::class, 'user_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+
    /**
      * @property string $role
      * @property string $seller_status

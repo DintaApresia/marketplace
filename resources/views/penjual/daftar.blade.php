@@ -225,7 +225,7 @@
           </div>
 
           <div class="flex items-center justify-between pt-4 border-t mt-4">
-            <a href="{{ route('profile.edit') }}"
+            <a href="{{ route('pembeli.profile') }}"
                class="text-xs sm:text-sm text-gray-500 hover:text-gray-700">
               ← Kembali ke halaman profil
             </a>

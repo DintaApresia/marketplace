@@ -42,13 +42,13 @@
         </h2>
 
         <div class="flex flex-col gap-2 text-sm">
-            <a href="#" class="px-4 py-2 rounded border border-gray-200 hover:bg-gray-50">
+            <a href="{{ route('admin.user') }}" class="px-4 py-2 rounded border border-gray-200 hover:bg-gray-50">
                 Kelola User
             </a>
-            <a href="{{ route('admin.penjual.index') }}" class="px-4 py-2 rounded border border-gray-200 hover:bg-gray-50">
+            <a href="{{ route('admin.penjual') }}" class="px-4 py-2 rounded border border-gray-200 hover:bg-gray-50">
                 Verifikasi Penjual
             </a>
-            <a href="#" class="px-4 py-2 rounded border border-gray-200 hover:bg-gray-50">
+            <a href="{{ route('admin.barang') }}" class="px-4 py-2 rounded border border-gray-200 hover:bg-gray-50">
                 Kelola Barang
             </a>
         </div>

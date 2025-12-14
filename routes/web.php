@@ -2,56 +2,163 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\AuthController; 
 use App\Http\Controllers\PembeliController;
 use App\Http\Controllers\PenjualController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ProdukController;
+use App\Http\Controllers\PencarianController;
+use App\Http\Controllers\KeranjangController;
 
-// Landing -> arahkan ke halaman login (Breeze)
+/*
+|--------------------------------------------------------------------------
+| Landing
+|--------------------------------------------------------------------------
+*/
 Route::get('/', fn () => redirect()->route('login'));
 
-// Route auth dari Breeze (login, register, password reset, logout-POST, email verify, dll.)
+/*
+|--------------------------------------------------------------------------
+| Auth routes (Breeze)
+|--------------------------------------------------------------------------
+*/
 require __DIR__.'/auth.php';
 
-// PROFIL — dipakai semua role, pakai ProfileController (punya Breeze)
-Route::middleware(['auth'])->group(function () {
-    Route::get('/profile',  [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::post('/profile/preferensi', [PembeliController::class, 'simpanPreferensi'])->name('pembeli.preferensi');
+/*
+|--------------------------------------------------------------------------
+| Redirect /dashboard sesuai role
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->get('/dashboard', function () {
+    $user = auth()->user();
+
+    return match ($user->role) {
+        'admin'  => redirect()->route('admin.dashboard'),
+        'penjual'=> redirect()->route('penjual.dashboard'),
+        default  => redirect()->route('pembeli.dashboard'),
+    };
+})->name('dashboard');
+
+/*
+|--------------------------------------------------------------------------
+| Profile umum (Breeze: update & delete akun)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->group(function () {
+
+    // GET /profile -> redirect ke profile sesuai role
+    Route::get('/profile', function () {
+        $user = auth()->user();
+
+        return match ($user->role) {
+            'penjual' => redirect()->route('penjual.profile'),
+            'pembeli' => redirect()->route('pembeli.profile'),
+            default   => redirect()->route('dashboard'),
+        };
+    })->name('profile');
+
+    Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// AREA PEMBELI
-Route::middleware(['auth' /*,'verified'*/])
-    ->prefix('pembeli')->name('pembeli.')
+/*
+|--------------------------------------------------------------------------
+| Area Pembeli
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:pembeli'])
+    ->prefix('pembeli')
+    ->name('pembeli.')
     ->group(function () {
-        Route::view('/dashboard', 'pembeli.dashboard')->name('dashboard');
-        Route::view('/keranjang', 'pembeli.keranjang')->name('keranjang');
-        Route::view('/orders',    'pembeli.orders')->name('orders');
+
+        // Dashboard & detail produk
+        Route::get('/dashboard', [PembeliController::class, 'index'])->name('dashboard');
+        Route::get('/produk/{id}', [PembeliController::class, 'detailProduk'])->name('produk.detail');
+
+        // Profil pembeli + preferensi lokasi
+        Route::get('/profile', [PembeliController::class, 'profile'])->name('profile');
+        Route::post('/profile/preferensi', [PembeliController::class, 'simpanPreferensi'])->name('preferensi');
+
+        // Hasil pencarian
+        Route::get('/hasilpencarian', [PencarianController::class, 'produk'])->name('hasilpencarian');
+
+        // Static pages (kalau nanti perlu controller, tinggal ganti)
+        Route::post('/keranjang/tambah/{produk}', [KeranjangController::class, 'tambah'])
+        ->name('keranjang.tambah');
+
+        Route::get('/keranjang', [KeranjangController::class, 'index'])
+            ->name('keranjang');
+
+        Route::patch('/keranjang/{produk}', [KeranjangController::class, 'ubah'])
+            ->name('keranjang.ubah');
+
+        Route::delete('/keranjang/{produk}', [KeranjangController::class, 'hapus'])
+            ->name('keranjang.hapus');
+        Route::patch('/keranjang/{id}/ajax', [KeranjangController::class, 'ubahKeranjangAjax'])
+        ->name('keranjang.ubah.ajax');
+
     });
 
-// AREA PENJUAL
-Route::middleware(['auth'])
-    ->prefix('penjual')->name('penjual.')
+/*
+|--------------------------------------------------------------------------
+| Area Penjual
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')
+    ->prefix('penjual')
+    ->name('penjual.')
     ->group(function () {
-        // 🔹 FORM DAFTAR PENJUAL (cukup auth, TIDAK pakai role:penjual)
+
+        // Daftar penjual (untuk user yang belum role penjual juga boleh)
         Route::get('/daftar',  [PenjualController::class, 'showDaftar'])->name('daftar');
         Route::post('/daftar', [PenjualController::class, 'submitDaftar'])->name('daftar.submit');
-       Route::get('/pengajuan-saya', [PenjualController::class, 'showDaftar'])
-            ->name('pengajuan-saya');
 
+        // (kalau ini memang halaman pengajuan, biasanya beda method/view)
+        Route::get('/pengajuan-saya', [PenjualController::class, 'showDaftar'])->name('pengajuan-saya');
 
-        // 🔹 ROUTE KHUSUS PENJUAL YANG SUDAH DIVERIFIKASI
+        // Khusus yang sudah role:penjual
         Route::middleware('role:penjual')->group(function () {
-            Route::view('/dashboard', 'penjual.dashboard')->name('dashboard');
-            // route penjual lain taruh di sini
+            Route::get('/dashboard', [PenjualController::class, 'dashboard'])->name('dashboard');
+
+            Route::get('/profile', [PenjualController::class, 'profile'])->name('profile');
+            Route::patch('/profile', [PenjualController::class, 'updateProfile'])->name('profile.update');
         });
     });
 
-Route::middleware(['auth', 'admin'])
-    ->prefix('admin')
-    ->name('admin.')
-    ->group(function () {
-        Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
-        Route::get('/penjual', [AdminController::class, 'penjuals'])->name('penjual.index');
-        Route::patch('/penjual/{id}/verify', [AdminController::class, 'verifyPenjual'])->name('penjual.verify');
-    });
+/*
+|--------------------------------------------------------------------------
+| Area Admin
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+
+    Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+
+    // halaman kelola user (file view: resources/views/admin/user.blade.php)
+    Route::get('/user', [AdminController::class, 'users'])->name('user');
+
+    Route::get('/user/{user}/edit', [AdminController::class, 'editUser'])->name('users.edit');
+    Route::patch('/user/{user}', [AdminController::class, 'updateUser'])->name('users.update');
+
+    // tombol hapus
+    Route::delete('/user/{user}', [AdminController::class, 'deleteUser'])->name('users.destroy');
+
+    // yang sudah kamu punya
+    Route::get('/penjual', [AdminController::class, 'penjuals'])->name('penjual');
+    Route::post('/penjual/{id}/verify', [AdminController::class, 'verifyPenjual'])->name('penjual.verify');
+
+    Route::get('/barang', [AdminController::class, 'barangIndex'])->name('barang');
+    Route::get('/barang/{produk}/edit', [AdminController::class, 'barangEdit'])->name('barang.edit');
+    Route::patch('/barang/{produk}', [AdminController::class, 'barangUpdate'])->name('barang.update');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Produk (umum, butuh login)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->group(function () {
+    Route::get('/produk', [ProdukController::class, 'index'])->name('produk.index');
+    Route::post('/produk', [ProdukController::class, 'store'])->name('produk.store');
+    Route::put('/produk/{produk}', [ProdukController::class, 'update'])->name('produk.update');
+    Route::delete('/produk/{produk}', [ProdukController::class, 'destroy'])->name('produk.destroy');
+});

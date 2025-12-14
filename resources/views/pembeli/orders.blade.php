@@ -134,5 +134,10 @@
       </button>
     </div>
   </div>
+
+  <a href="{{ route('pembeli.profile') }}"
+               class="text-xs sm:text-sm text-gray-500 hover:text-gray-700">
+              ← Kembali ke halaman profil
+            </a>
 </div>
 @endsection

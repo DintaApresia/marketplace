@@ -23,18 +23,17 @@
                 Dashboard
             </a>
 
-            <a href="#"
+            <a href="{{ route('admin.user') }}"
                class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
                 Kelola User
             </a>
 
-            <a href="{{ route('admin.penjual.index') }}"
+            <a href="{{ route('admin.penjual') }}"
                 class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
                 Verifikasi Penjual
             </a>
 
-
-            <a href="#"
+            <a href="{{ route('admin.barang') }}"
                class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
                 Kelola Barang
             </a>
@@ -69,12 +68,12 @@
                     Dashboard
                 </a>
 
-                <a href="#"
+                <a href="{{ route('admin.user') }}"
                    class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
                     Kelola User
                 </a>
 
-                <a href="{{ route('admin.penjual.index') }}"
+                <a href="{{ route('admin.penjual') }}"
                     class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
                         Verifikasi Penjual
                 </a>

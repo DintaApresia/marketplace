@@ -2,64 +2,59 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Pembeli;
+use App\Models\Penjual;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    // HALAMAN PROFILE (AKUN + PREFERENSI PEMBELI DI SATU HALAMAN)
-    public function edit(Request $request)
+        public function edit(Request $request): View
     {
-        $user     = $request->user();
-        $isSeller = ($user->role === 'penjual');
-        $layout   = $isSeller ? 'layouts.penjual' : 'layouts.pembeli';
+        $user    = $request->user();
+        $pembeli = Pembeli::where('idUser', $user->id)->first();
+        $penjual = Penjual::where('user_id', $user->id)->first();
 
-        // 🔹 Ambil data pembeli hanya kalau user ini pembeli
-        $pembeli = null;
-        if (! $isSeller) {
-            $pembeli = Pembeli::where('idUser', $user->id)->first();
-        }
-
-        // view utama profile kamu: resources/views/profile/index.blade.php
-        return view('profile.index', [
+        return view('profile.edit', [
             'user'    => $user,
-            'layout'  => $layout,
-            'isSeller'=> $isSeller,
-            'pembeli' => $pembeli, // ⬅️ dipakai untuk form preferensi
+            'pembeli' => $pembeli,
+            'penjual' => $penjual,
         ]);
     }
 
-    // UPDATE DATA AKUN (NAMA, EMAIL, PASSWORD)
-    public function update(Request $request)
+    public function update(ProfileUpdateRequest $request)
     {
         $user = $request->user();
 
-        // validasi dasar
-        $data = $request->validate([
-            'name'  => ['required', 'string', 'max:255'],
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email')->ignore($user->id),
-            ],
-            // password opsional: hanya update jika diisi
-            'password' => ['nullable', 'confirmed', 'min:8'],
-        ]);
+        $user->fill($request->validated());
 
-        // update field dasar
-        $user->name  = $data['name'];
-        $user->email = $data['email'];
-
-        // update password jika diisi
-        if (!empty($data['password'])) {
-            $user->password = Hash::make($data['password']);
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
         $user->save();
 
-        return back()->with('status', 'Profil diperbarui.');
+        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    public function destroy(Request $request)
+    {
+        $request->validate([
+            'password' => ['required', 'current_password'],
+        ]);
+
+        $user = $request->user();
+
+        Auth::logout();
+
+        $user->delete();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return Redirect::to('/');
     }
 }

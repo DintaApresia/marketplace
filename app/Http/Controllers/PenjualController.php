@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Models\Produk;
 use App\Models\Pembeli;
 use App\Models\Penjual;
 use Illuminate\Http\Request;
@@ -14,6 +14,21 @@ class PenjualController extends Controller
      * - kalau sudah penjual & approved -> lempar ke dashboard penjual
      * - kalau pending/rejected/belum daftar -> tampilkan view penjual.daftar
      */
+
+    public function profile(Request $request)
+    {
+        $user = $request->user();
+
+        // Pastikan user memang penjual
+        if ($user->seller_status !== 'verified') {
+            abort(403, 'Anda bukan penjual.');
+        }
+
+        $penjual = Penjual::where('user_id', $user->id)->first();
+
+        return view('penjual.profile', compact('user', 'penjual'));
+    }
+
     public function showDaftar(Request $request)
     {
         $user = $request->user();
@@ -84,7 +99,7 @@ class PenjualController extends Controller
                 'alamat_toko'     => $data['alamat_toko'],
                 'rekening'        => $data['rekening'],
                 'nama_rekening'   => $data['nama_rekening'],
-                'kartu_identitas' => $kartuIdentitasPath, // ⬅️ SIMPAN PATH FILE DI SINI
+                'kartu_identitas' => $kartuIdentitasPath,
             ]
         );
 
@@ -112,5 +127,55 @@ class PenjualController extends Controller
         }
 
         return view('penjual.daftar', compact('user', 'penjual'));
+    }
+
+    /**
+     * Update pengaturan toko dari halaman /profile
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        // hanya boleh kalau sudah seller verified
+        if ($user->seller_status !== 'verified') {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'nama_toko'    => 'nullable|string|max:100',
+            'no_telp'      => 'nullable|string|max:30',
+            'nama_rekening'=> 'nullable|string|max:100',
+            'rekening'     => 'nullable|string|max:100',
+            'alamat_toko'    => 'nullable|string',
+            'latitude'       => 'nullable|numeric',
+            'longitude'      => 'nullable|numeric',
+            'kartu_identitas'=> 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ]);
+
+        $penjual = Penjual::firstOrNew(['user_id' => $user->id]);
+        $penjual->nama_toko       = $data['nama_toko']       ?? $penjual->nama_toko;
+        $penjual->no_telp         = $data['no_telp']         ?? $penjual->no_telp;
+        $penjual->nama_rekening   = $data['nama_rekening']   ?? $penjual->nama_rekening;
+        $penjual->rekening        = $data['rekening']        ?? $penjual->rekening;
+        $penjual->alamat_toko    = $data['alamat_toko']    ?? $penjual->alamat_toko;
+        $penjual->latitude       = $data['latitude']       ?? $penjual->latitude;
+        $penjual->longitude      = $data['longitude']      ?? $penjual->longitude;
+        
+        // kalau ganti kartu identitas
+        if ($request->hasFile('kartu_identitas')) {
+            $path = $request->file('kartu_identitas')->store('kartu_identitas', 'public');
+            $penjual->kartu_identitas = $path;
+        }
+        $penjual->save();
+
+        return redirect()->route('penjual.profile')->with('success', 'Pengaturan toko diperbarui.');
+    }
+
+    
+    public function dashboard()
+    {
+        $totalProduk = Produk::where('user_id', Auth::id())->count();
+
+        return view('penjual.dashboard', compact('totalProduk'));
     }
 }
