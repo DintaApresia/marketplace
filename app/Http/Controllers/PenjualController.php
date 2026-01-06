@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 use App\Models\Produk;
 use App\Models\Pembeli;
 use App\Models\Penjual;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PenjualController extends Controller
 {
@@ -108,7 +110,7 @@ class PenjualController extends Controller
         $user->save();
 
         return redirect()
-            ->route('profile.edit')
+            ->route('pembeli.profile')
             ->with('status', 'Permintaan menjadi penjual berhasil dikirim. Menunggu verifikasi admin.');
     }
 
@@ -172,10 +174,109 @@ class PenjualController extends Controller
     }
 
     
+  
     public function dashboard()
     {
-        $totalProduk = Produk::where('user_id', Auth::id())->count();
+        $sellerId = Auth::id();
 
-        return view('penjual.dashboard', compact('totalProduk'));
+        // TOTAL PRODUK
+        $totalProduk = Produk::where('user_id', $sellerId)->count();
+
+        // ✅ Jika tidak ada is_active, pakai stok (aktifkan ini & comment 2 baris di atas):
+        $produkAktif = Produk::where('user_id', $sellerId)->where('stok', '>', 0)->count();
+        $produkNonaktif = Produk::where('user_id', $sellerId)->where('stok', '=', 0)->count();
+        
+        // STATUS PESANAN (khusus order yang punya item produk seller)
+        $pesananDikemas = Order::where('status_pesanan', 'dikemas')
+            ->whereHas('items.produk', fn($q) => $q->where('user_id', $sellerId))
+            ->count();
+
+        $pesananDikirim = Order::where('status_pesanan', 'dikirim')
+            ->whereHas('items.produk', fn($q) => $q->where('user_id', $sellerId))
+            ->count();
+
+        $pesananSelesai = Order::where('status_pesanan', 'selesai')
+            ->whereHas('items.produk', fn($q) => $q->where('user_id', $sellerId))
+            ->count();
+
+        $pesananDitolak = Order::where('status_pesanan', 'ditolak')
+            ->whereHas('items.produk', fn($q) => $q->where('user_id', $sellerId))
+            ->count();
+
+        // Total pesanan masuk = semua status di atas (biar konsisten)
+        $pesananMasuk = $pesananDikemas + $pesananDikirim + $pesananSelesai + $pesananDitolak;
+
+        return view('penjual.dashboard', compact(
+            'totalProduk',
+            'produkAktif',
+            'produkNonaktif',
+            'pesananMasuk',
+            'pesananDikemas',
+            'pesananDikirim',
+            'pesananSelesai',
+            'pesananDitolak'
+        ));
     }
+
+    public function downloadLaporan()
+    {
+        $sellerId = Auth::id();
+
+        $totalProduk = Produk::where('user_id', $sellerId)->count();
+
+        // kalau pakai is_active:
+        $produkAktif = Produk::where('user_id', $sellerId)->where('is_active', 1)->count();
+        $produkNonaktif = Produk::where('user_id', $sellerId)->where('is_active', 0)->count();
+
+        // status pesanan
+        $pesananDikemas = Order::where('status_pesanan', 'dikemas')
+            ->whereHas('items.produk', function ($q) use ($sellerId) {
+                $q->where('user_id', $sellerId);
+            })
+            ->count();
+
+        $pesananDikirim = Order::where('status_pesanan', 'dikirim')
+            ->whereHas('items.produk', function ($q) use ($sellerId) {
+                $q->where('user_id', $sellerId);
+            })
+            ->count();
+
+        $pesananSelesai = Order::where('status_pesanan', 'selesai')
+            ->whereHas('items.produk', function ($q) use ($sellerId) {
+                $q->where('user_id', $sellerId);
+            })
+            ->count();
+
+        $pesananDitolak = Order::where('status_pesanan', 'ditolak')
+            ->whereHas('items.produk', function ($q) use ($sellerId) {
+                $q->where('user_id', $sellerId);
+            })
+            ->count();
+
+        // TOTAL NOMINAL TERJUAL (HANYA PESANAN SELESAI)
+        $totalTerjual = Order::where('status_pesanan', 'selesai')
+            ->whereHas('items.produk', function ($q) use ($sellerId) {
+                $q->where('user_id', $sellerId);
+            })
+            ->sum('total_bayar'); // ⬅️ ganti jika nama kolom beda
+
+        $pesananMasuk = $pesananDikemas + $pesananDikirim + $pesananSelesai + $pesananDitolak;
+
+        $data = compact(
+            'totalProduk',
+            'produkAktif',
+            'produkNonaktif',
+            'pesananMasuk',
+            'pesananDikemas',
+            'pesananDikirim',
+            'pesananSelesai',
+            'pesananDitolak',
+            'totalTerjual'
+        );
+
+        $pdf = Pdf::loadView('penjual.laporan_dashboard_pdf', $data)->setPaper('a4', 'portrait');
+
+        return $pdf->download('laporan-dashboard-penjual.pdf');
+    }
+
 }

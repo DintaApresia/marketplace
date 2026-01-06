@@ -2,14 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Keranjang;
 use App\Models\Produk;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class KeranjangController extends Controller
 {
     public function index()
     {
-        $cart = session('cart', []);
+        // Ambil keranjang user + relasi produk (stok/harga terbaru dari DB)
+        $items = Keranjang::with('produk')
+            ->where('id_user', Auth::id())
+            ->get();
+
+        // Bentuk array seperti format view kamu: $cart[id_produk] = [...]
+        $cart = $items->mapWithKeys(function ($k) {
+            $p = $k->produk;
+
+            // Kalau produk sudah terhapus, skip (atau bisa auto-delete baris keranjang)
+            if (!$p) return [];
+
+            return [$p->id => [
+                'id'     => (int) $p->id,
+                'nama'   => $p->nama_barang,
+                'harga'  => (int) $p->harga,
+                'gambar' => $p->gambar,
+                'stok'   => (int) $p->stok,
+                'qty'    => (int) $k->jumlah,
+            ]];
+        })->toArray();
+
         $total = collect($cart)->sum(fn($i) => $i['harga'] * $i['qty']);
 
         return view('pembeli.keranjang', compact('cart', 'total'));
@@ -18,31 +42,31 @@ class KeranjangController extends Controller
     public function tambah(Request $request, Produk $produk)
     {
         $request->validate([
-            'qty' => ['nullable','integer','min:1'],
+            'qty' => ['nullable', 'integer', 'min:1'],
         ]);
-
-        if ($produk->stok <= 0) {
-            return back()->with('error', 'Stok habis.');
-        }
 
         $qtyTambah = (int) ($request->qty ?? 1);
 
-        $cart = session('cart', []);
-        $id = $produk->id;
+        // Stok harus dari DB
+        $stokServer = (int) $produk->stok;
+        if ($stokServer <= 0) {
+            return back()->with('error', 'Stok habis.');
+        }
 
-        $qtySekarang = isset($cart[$id]) ? (int)$cart[$id]['qty'] : 0;
-        $qtyBaru = min($qtySekarang + $qtyTambah, $produk->stok);
+        $userId = Auth::id();
 
-        $cart[$id] = [
-            'id'     => $produk->id,
-            'nama'   => $produk->nama_barang,
-            'harga'  => (int) $produk->harga,
-            'gambar' => $produk->gambar,
-            'qty'    => $qtyBaru,
-            // ❌ JANGAN simpan stok di session
-        ];
+        DB::transaction(function () use ($userId, $produk, $qtyTambah, $stokServer) {
+            $row = Keranjang::firstOrNew([
+                'id_user'   => $userId,
+                'id_produk' => $produk->id,
+            ]);
 
-        session(['cart' => $cart]);
+            $qtySekarang = (int) ($row->jumlah ?? 0);
+            $qtyBaru = min($qtySekarang + $qtyTambah, $stokServer);
+
+            $row->jumlah = $qtyBaru;
+            $row->save();
+        });
 
         return back()->with('success', 'Berhasil dimasukkan ke keranjang!');
     }
@@ -53,16 +77,9 @@ class KeranjangController extends Controller
             'action' => 'required|in:plus,minus',
         ]);
 
-        $cart = session('cart', []);
+        $userId = Auth::id();
 
-        if (!isset($cart[$id])) {
-            return response()->json([
-                'ok' => false,
-                'message' => 'Item tidak ditemukan di keranjang.',
-            ], 404);
-        }
-
-        // 🔥 STOK SELALU DARI DB
+        // Ambil produk & stok terbaru
         $produk = Produk::find($id);
         if (!$produk) {
             return response()->json([
@@ -72,7 +89,26 @@ class KeranjangController extends Controller
         }
 
         $stokServer = (int) $produk->stok;
-        $qty = (int) $cart[$id]['qty'];
+        if ($stokServer <= 0) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Stok habis.',
+                'stok' => 0,
+            ], 422);
+        }
+
+        $row = Keranjang::where('id_user', $userId)
+            ->where('id_produk', $produk->id)
+            ->first();
+
+        if (!$row) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Item tidak ditemukan di keranjang.',
+            ], 404);
+        }
+
+        $qty = (int) $row->jumlah;
 
         if ($request->action === 'plus') {
             if ($qty >= $stokServer) {
@@ -84,30 +120,27 @@ class KeranjangController extends Controller
                 ], 422);
             }
             $qty++;
-        } else {
+        } else { // minus
             $qty = max(1, $qty - 1);
         }
 
-        // ✅ UPDATE SESSION DENGAN QTY BARU
-        $cart[$id]['qty'] = $qty;
-        session(['cart' => $cart]);
+        $row->update(['jumlah' => $qty]);
 
         return response()->json([
             'ok' => true,
             'message' => 'Qty diperbarui.',
-            'id' => (string) $id,
+            'id' => (string) $produk->id,
             'qty' => $qty,
-            'stok' => $stokServer, // ⬅️ KIRIM STOK REAL KE UI
-            'itemSubtotal' => $cart[$id]['harga'] * $qty,
+            'stok' => $stokServer,
+            'itemSubtotal' => ((int) $produk->harga) * $qty,
         ]);
     }
 
     public function hapus(Produk $produk)
     {
-        $cart = session('cart', []);
-        unset($cart[$produk->id]);
-
-        session(['cart' => $cart]);
+        Keranjang::where('id_user', Auth::id())
+            ->where('id_produk', $produk->id)
+            ->delete();
 
         return back()->with('success', 'Produk dihapus dari keranjang.');
     }

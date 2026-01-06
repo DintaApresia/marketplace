@@ -37,20 +37,17 @@ class ProdukController extends Controller
 
         $data = $request->validate([
             'nama_barang' => 'required|string|max:255',
-            'deskripsi'   => 'nullable|string',
+            'deskripsi'   => 'required|string',
             'harga'       => 'required|numeric|min:0',
-            'stok'        => 'required|integer|min:1',
-            'gambar'      => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'is_active'   => 'nullable|boolean',
+            'stok'        => 'required|integer|min:0', // ✅ boleh 0
+            'gambar'      => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // set pemilik produk = user yang login
+        // set pemilik produk
         $data['user_id'] = $user->id;
 
-        // kalau checkbox/tombol status tidak diisi, default aktif
-        $data['is_active'] = $request->has('is_active')
-            ? (bool) $request->is_active
-            : true;
+        // ✅ full otomatis: stok 0 => nonaktif, stok > 0 => aktif
+        $data['is_active'] = ((int) $data['stok'] > 0);
 
         // upload gambar kalau ada
         if ($request->hasFile('gambar')) {
@@ -63,6 +60,7 @@ class ProdukController extends Controller
             ->route('produk.index')
             ->with('success', 'Produk berhasil ditambahkan.');
     }
+
 
     /**
      * Form edit produk (nanti).
@@ -83,17 +81,14 @@ class ProdukController extends Controller
 
         $data = $request->validate([
             'nama_barang' => 'required|string|max:255',
-            'deskripsi'   => 'nullable|string',
+            'deskripsi'   => 'required|string',
             'harga'       => 'required|numeric|min:0',
             'stok'        => 'required|integer|min:0',
             'gambar'      => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'is_active'   => 'nullable|boolean',
         ]);
 
-        // status aktif kalau tidak dicentang pakai nilai lama
-        $data['is_active'] = $request->has('is_active')
-            ? (bool) $request->is_active
-            : $produk->is_active;
+        // ✅ full otomatis: stok 0 => nonaktif, stok > 0 => aktif
+        $data['is_active'] = ((int) $data['stok'] > 0);
 
         // kalau upload gambar baru
         if ($request->hasFile('gambar')) {
@@ -112,6 +107,7 @@ class ProdukController extends Controller
             ->route('produk.index')
             ->with('success', 'Produk berhasil diperbarui.');
     }
+
 
     /**
      * Hapus produk (nanti diselesaikan).
@@ -145,58 +141,4 @@ class ProdukController extends Controller
             abort(403);
         }
     }
-
-    
-    // public function searchNearby(Request $request)
-    // {
-    //     $keyword = $request->input('keyword');
-    //     $latUser = $request->input('latitude');
-    //     $lonUser = $request->input('longitude');
-
-    //     if (!$latUser || !$lonUser) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'Lokasi pengguna tidak ditemukan'
-    //         ], 400);
-    //     }
-
-    //     $produk = DB::table('produks')
-    //         ->join('penjuals', 'penjuals.user_id', '=', 'produks.user_id')
-    //         ->select(
-    //             'produks.id',
-    //             'produks.nama',
-    //             'produks.harga',
-    //             'produks.foto',
-    //             'penjuals.nama_toko',
-    //             'penjuals.latitude',
-    //             'penjuals.longitude',
-    //             DB::raw("
-    //                 (
-    //                     6371 * acos(
-    //                         cos(radians(?)) *
-    //                         cos(radians(penjuals.latitude)) *
-    //                         cos(radians(penjuals.longitude) - radians(?)) +
-    //                         sin(radians(?)) *
-    //                         sin(radians(penjuals.latitude))
-    //                     )
-    //                 ) AS distance
-    //             ")
-    //         )
-    //         ->setBindings([$latUser, $lonUser, $latUser]) // 🔥 BIND PARAMETER
-    //         ->when($keyword, function ($q) use ($keyword) {
-    //             $q->where('produks.nama', 'LIKE', "%$keyword%");
-    //         })
-    //         ->whereNotNull('penjuals.latitude')
-    //         ->whereNotNull('penjuals.longitude')
-    //         ->havingRaw("distance IS NOT NULL")
-    //         ->orderBy('distance', 'ASC')
-    //         ->get();
-
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'data' => $produk
-    //     ]);
-    // }
-
-
 }

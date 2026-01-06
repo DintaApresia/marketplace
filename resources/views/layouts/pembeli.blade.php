@@ -5,11 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>@yield('title','SecondLife — Pembeli')</title>
+
   @vite(['resources/css/app.css','resources/js/app.js'])
 
   {{-- Bootstrap Icons --}}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+  {{-- Alpine --}}
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  {{-- PAGE-LEVEL STYLES (from @push('styles')) --}}
+  @stack('styles')
 </head>
 
 <body class="bg-white text-gray-900">
@@ -41,44 +47,53 @@
         </a>
       </nav>
 
-      {{-- SEARCH hanya di dashboard --}}
-      @if (request()->routeIs('pembeli.dashboard'))
-      <form
-          action="{{ route('pembeli.hasilpencarian') }}"  {{-- ⬅️ pindah ke halaman hasil --}}
-          method="GET"
-          class="relative flex items-center w-64 mx-4"
-          role="search"
-      >
-          <input 
-            name="q"
-            type="search"
-            placeholder="Cari produk..."
-            class="w-full rounded-full bg-gray-100 py-1.5 pl-4 pr-10 text-sm shadow-sm 
-                  focus:ring-2 focus:ring-green-500 outline-none"
-          >
+      {{-- SEARCH hanya di: dashboard, hasilpencarian --}}
+      @if (request()->routeIs('pembeli.dashboard', 'pembeli.search', 'pembeli.produk.detail'))
+      <form action="{{ route('pembeli.search') }}" method="GET"
+            class="relative flex items-center w-72 mx-4" role="search">
+        <input
+          name="q"
+          type="search"
+          value="{{ request('q') }}"
+          placeholder="Cari produk..."
+          class="w-full rounded-full bg-gray-100 py-1.5 pl-4 pr-10 text-sm shadow-sm
+                focus:ring-2 focus:ring-green-500 outline-none"
+        >
 
-          <button type="submit" class="absolute right-3 text-gray-500 hover:text-green-700">
-            <i class="bi bi-search text-lg"></i>
-          </button>
+        <input type="hidden" name="max_km" value="{{ request('max_km', 10) }}">
+
+        <button type="submit" class="absolute right-3 text-gray-500 hover:text-green-700">
+          <i class="bi bi-search text-lg"></i>
+        </button>
       </form>
       @endif
 
       {{-- AUTH --}}
       <div class="flex items-center gap-3">
         @auth
-        <form method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Yakin ingin keluar?')">
-          @csrf
-          <button class="rounded-md bg-red-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-800">
-            Logout
-          </button>
-        </form>
+          <span class="font-medium">
+            {{ auth()->user()->name }}
+          </span>
+
+          <img
+            src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&background=22c55e&color=ffffff"
+            alt="Avatar"
+            class="w-9 h-9 rounded-full border"
+          >
+
+          <form method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Yakin ingin keluar?')">
+            @csrf
+            <button class="rounded-md bg-red-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-800">
+              Logout
+            </button>
+          </form>
         @endauth
 
         @guest
-        <a href="{{ route('login') }}"
-           class="rounded-md bg-green-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-800">
-          Sign In
-        </a>
+          <a href="{{ route('login') }}"
+             class="rounded-md bg-green-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-800">
+            Sign In
+          </a>
         @endguest
       </div>
 
@@ -89,11 +104,13 @@
   <main class="mx-auto @yield('maxwidth','max-w-7xl') px-4 sm:px-6 lg:px-8 py-6">
     @yield('content')
   </main>
-  
+
   {{-- FOOTER --}}
   <footer class="mt-10 border-t py-6 text-center text-sm text-gray-500">
     © {{ now()->year }} SecondLife. All rights reserved.
   </footer>
 
+  {{-- PAGE-LEVEL SCRIPTS (from @push('scripts')) --}}
+  @stack('scripts')
 </body>
 </html>

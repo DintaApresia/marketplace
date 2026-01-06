@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Penjual;
@@ -17,15 +18,27 @@ class AdminController extends Controller
         $totalUsers = User::count();
 
         // contoh lain kalau mau:
+        $totalAdmin = User::where('role', 'admin')->count();
         $totalPenjual = User::where('role', 'penjual')->count();
         $totalPembeli = User::where('role', 'pembeli')->count();
 
         return view('admin.dashboard', [
             'totalUsers'   => $totalUsers,
+            'totalAdmin' => $totalAdmin,
             'totalPenjual' => $totalPenjual,
             'totalPembeli' => $totalPembeli,
             // 'totalBarang'  => Barang::count(), // kalau sudah ada tabel barang
         ]);
+    }
+
+    public function show()
+    {
+        $penjuals = User::with('penjual')
+            ->where('role', 'penjual')
+            ->latest()
+            ->get();
+
+        return view('admin.toko', compact('penjuals'));
     }
 
     public function penjuals()
@@ -94,14 +107,28 @@ class AdminController extends Controller
                 Rule::unique('users','email')->ignore($user->id),
             ],
             'role' => ['required', Rule::in(['admin','penjual','pembeli'])],
-            // sesuai enum di DB kamu:
             'seller_status' => ['required', Rule::in(['none','pending','verified','rejected'])],
+            'password' => ['nullable','string','min:8','confirmed'],
         ]);
 
-        $user->update($validated);
+        // update field WAJIB
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->role = $validated['role'];
+        $user->seller_status = $validated['seller_status'];
 
-        return redirect()->route('admin.users.edit',$user->id)->with('success', 'User berhasil diperbarui.');
+        // 🔐 password hanya diupdate kalau DIISI
+        if ($request->filled('password')) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        $user->save();
+
+        return redirect()
+            ->route('admin.user', $user->id)
+            ->with('success', 'User berhasil diperbarui.');
     }
+
 
     public function deleteUser(User $user)
     {
@@ -114,33 +141,38 @@ class AdminController extends Controller
         return back()->with('success', 'User berhasil dihapus.');
     }
 
-    
-    public function barangIndex(Request $request)
+    public function barangIndex(Request $request, $user)
     {
         $q = $request->get('q');
 
         $barangs = Produk::with('user')
+            ->where('user_id', $user) // ✅ INI KUNCINYA
             ->when($q, function ($query) use ($q) {
-                $query->where('nama_barang', 'like', "%{$q}%")
-                    ->orWhere('deskripsi', 'like', "%{$q}%");
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('nama_barang', 'like', "%{$q}%")
+                        ->orWhere('deskripsi', 'like', "%{$q}%");
+                });
             })
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('admin.barang', compact('barangs', 'q'));
+        return view('admin.barang', compact('barangs', 'q', 'user'));
     }
 
-    
+   
     public function barangEdit(Produk $produk)
     {
-        return view('admin.barang_edit', compact('produk'));
+        $user = $produk->user_id;
+        return view('admin.barang_edit', compact('produk', 'user'));
     }
+
 
     public function barangUpdate(Request $request, Produk $produk)
     {
         $validated = $request->validate([
             'nama_barang' => 'required|string|max:255',
-            'deskripsi'   => 'nullable|string',
+            'deskripsi'   => 'required|string',
             'harga'       => 'required|numeric|min:0',
             'stok'        => 'required|integer|min:0',
             'is_active'   => 'required|boolean',
@@ -157,7 +189,37 @@ class AdminController extends Controller
         $produk->update($validated);
 
         return redirect()
-            ->route('admin.barang.edit', $produk->id)
+            ->route('admin.toko.barang', $produk->user_id)
             ->with('success', 'Barang berhasil diperbarui.');
     }
+
+    public function hapusBarang($id)
+    {
+        $produk = Produk::findOrFail($id);
+
+        $pernahDipesan = \DB::table('order_items')
+            ->where('produk_id', $produk->id)
+            ->exists();
+
+        if ($pernahDipesan) {
+            $produk->update([
+                'is_active' => 0,
+                'stok' => 0,
+            ]);
+
+            return back()->with('success', 'Produk sudah pernah dipesan, jadi tidak bisa dihapus. Produk dinonaktifkan.');
+        }
+
+        if ($produk->gambar && \Storage::disk('public')->exists($produk->gambar)) {
+            \Storage::disk('public')->delete($produk->gambar);
+        }
+
+        $userId = $produk->user_id;
+        $produk->delete();
+
+        return redirect()
+            ->route('admin.toko.barang', $userId)
+            ->with('success', 'Produk berhasil dihapus.');
+    }
+
 }

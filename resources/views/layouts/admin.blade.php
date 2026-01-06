@@ -19,7 +19,10 @@
         <nav class="mt-4 px-4 space-y-2">
 
             <a href="{{ route('admin.dashboard') }}"
-               class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+            class="block px-3 py-2 rounded-lg
+            {{ request()->routeIs('admin.dashboard')
+                ? 'bg-gray-200 font-semibold text-gray-900'
+                : 'text-gray-700 hover:bg-gray-100' }}">
                 Dashboard
             </a>
 
@@ -33,9 +36,9 @@
                 Verifikasi Penjual
             </a>
 
-            <a href="{{ route('admin.barang') }}"
+            <a href="{{ route('admin.toko.show') }}"
                class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
-                Kelola Barang
+                Kelola Toko
             </a>
 
             <form action="/logout" method="POST">
@@ -114,6 +117,6 @@
         }
     });
 </script>
-
+@stack('scripts')
 </body>
 </html>

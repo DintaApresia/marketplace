@@ -5,13 +5,27 @@
 <div class="max-w-7xl mx-auto px-4 py-6">
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+
+        {{-- JUDUL --}}
         <div>
             <h1 class="text-2xl font-semibold text-gray-800">Kelola Barang</h1>
-            <p class="text-sm text-gray-500">Kelola data barang/produk yang ada di marketplace.</p>
+            <p class="text-sm text-gray-500">
+                Kelola data barang/produk yang ada di marketplace.
+            </p>
+
+            {{-- TOMBOL KEMBALI --}}
+            <a href="{{ route('admin.toko.show') }}"
+            class="inline-block mt-2 text-xs sm:text-sm text-gray-500 hover:text-gray-700">
+                ← Kembali ke halaman toko
+            </a>
         </div>
 
-        {{-- Search --}}
-        <form method="GET" action="{{ route('admin.barang') }}" class="flex gap-2">
+        {{-- SEARCH --}}
+        <form method="GET" action="{{ route('admin.toko.barang', $user) }}" class="flex gap-2">
+            @if(!empty($userId))
+                <input type="hidden" name="user_id" value="{{ $userId }}">
+            @endif
+
             <input
                 type="text"
                 name="q"
@@ -19,11 +33,12 @@
                 placeholder="Cari nama / deskripsi..."
                 class="w-64 rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-green-600 focus:outline-none"
             />
-            <button
-                class="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+            <button class="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
                 Cari
             </button>
         </form>
+
+
     </div>
 
     {{-- Alert --}}
@@ -109,9 +124,13 @@
                                 {{ (int) $b->stok }}
                             </td>
 
-                            {{-- Status --}}
+                           {{-- Status --}}
                             <td class="px-4 py-3">
-                                @if ($b->is_active)
+                                @if ($b->stok <= 0)
+                                    <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                                        Nonaktif
+                                    </span>
+                                @elseif ($b->is_active)
                                     <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
                                         Aktif
                                     </span>
@@ -121,6 +140,7 @@
                                     </span>
                                 @endif
                             </td>
+
 
                             {{-- Dibuat --}}
                             <td class="px-4 py-3 text-gray-600">
@@ -136,10 +156,17 @@
                                     </a>
 
 
-                                    <button
-                                        class="px-3 py-1.5 rounded-md bg-red-600 text-white text-xs hover:bg-red-700">
-                                        Hapus
-                                    </button>
+                                    <form action="{{ route('admin.produk.hapus', $b->id) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('Yakin ingin menghapus produk ini?')">
+                                        @csrf
+                                        @method('DELETE')
+
+                                        <button type="submit"
+                                            class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700">
+                                            Hapus
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
 

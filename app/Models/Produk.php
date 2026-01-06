@@ -36,4 +36,9 @@ class Produk extends Model
     {
         return $this->hasOne(Penjual::class, 'user_id', 'user_id');
     }
+
+    public function ratings()
+    {
+        return $this->hasMany(ProdukRating::class, 'produk_id');
+    }
 }

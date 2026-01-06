@@ -8,6 +8,9 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\PencarianController;
 use App\Http\Controllers\KeranjangController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderMasukController;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 /*
 |--------------------------------------------------------------------------
@@ -76,25 +79,35 @@ Route::middleware(['auth', 'role:pembeli'])
 
         // Profil pembeli + preferensi lokasi
         Route::get('/profile', [PembeliController::class, 'profile'])->name('profile');
+        Route::post('/profile/alamat', [PembeliController::class, 'simpanAlamat'])->name('alamat');
         Route::post('/profile/preferensi', [PembeliController::class, 'simpanPreferensi'])->name('preferensi');
 
+        Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+
+        // checkout page
+        Route::get('/checkout', [OrderController::class, 'checkout']) ->name('checkout');
+
+        // simpan order
+        Route::post('/orders/simpan', [OrderController::class, 'simpan']) ->name('orders.simpan');
+
+        // sukses
+        Route::get('/orders/{orderId}/sukses', [OrderController::class, 'sukses']) ->name('orders.sukses');
+        Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders/{order}/selesai', [OrderController::class, 'orderSelesai'])->name('orders.selesai');
+        Route::post('/orders/{order}/rating', [OrderController::class, 'storeRating'])->name('orders.rating.store');
         // Hasil pencarian
-        Route::get('/hasilpencarian', [PencarianController::class, 'produk'])->name('hasilpencarian');
+        // Route::get('/hasilpencarian', [PencarianController::class, 'produk'])->name('hasilpencarian');
+        Route::get('/search', [PencarianController::class, 'searchNearby'])->name('search');
 
         // Static pages (kalau nanti perlu controller, tinggal ganti)
-        Route::post('/keranjang/tambah/{produk}', [KeranjangController::class, 'tambah'])
-        ->name('keranjang.tambah');
+        Route::post('/keranjang/tambah/{produk}', [KeranjangController::class, 'tambah'])->name('keranjang.tambah');
 
-        Route::get('/keranjang', [KeranjangController::class, 'index'])
-            ->name('keranjang');
+        Route::get('/keranjang', [KeranjangController::class, 'index'])->name('keranjang');
 
-        Route::patch('/keranjang/{produk}', [KeranjangController::class, 'ubah'])
-            ->name('keranjang.ubah');
+        Route::patch('/keranjang/{produk}', [KeranjangController::class, 'ubah'])->name('keranjang.ubah');
 
-        Route::delete('/keranjang/{produk}', [KeranjangController::class, 'hapus'])
-            ->name('keranjang.hapus');
-        Route::patch('/keranjang/{id}/ajax', [KeranjangController::class, 'ubahKeranjangAjax'])
-        ->name('keranjang.ubah.ajax');
+        Route::delete('/keranjang/{produk}', [KeranjangController::class, 'hapus'])->name('keranjang.hapus');
+        Route::patch('/keranjang/{id}/ajax', [KeranjangController::class, 'ubahKeranjangAjax'])->name('keranjang.ubah.ajax');
 
     });
 
@@ -118,10 +131,16 @@ Route::middleware('auth')
         // Khusus yang sudah role:penjual
         Route::middleware('role:penjual')->group(function () {
             Route::get('/dashboard', [PenjualController::class, 'dashboard'])->name('dashboard');
+            Route::get('/dashboard/laporan', [PenjualController::class, 'downloadLaporan'])->name('dashboard.laporan');
 
             Route::get('/profile', [PenjualController::class, 'profile'])->name('profile');
             Route::patch('/profile', [PenjualController::class, 'updateProfile'])->name('profile.update');
-        });
+            Route::get('/pesanan-masuk', [OrderMasukController::class, 'index'])->name('orders.masuk');
+
+            Route::get('/pesanan-masuk/{order}', [OrderMasukController::class, 'show'])->name('orders.masuk.show');
+
+            // Opsional: ubah status (accept/proses/kirim/selesai)
+            Route::patch('/pesanan-masuk/{order}/status',[OrderMasukController::class, 'updateStatus'])->name('orders.masuk.status');});
     });
 
 /*
@@ -132,6 +151,7 @@ Route::middleware('auth')
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
 
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+    Route::get('/toko', [AdminController::class, 'show'])->name('toko.show');
 
     // halaman kelola user (file view: resources/views/admin/user.blade.php)
     Route::get('/user', [AdminController::class, 'users'])->name('user');
@@ -146,9 +166,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/penjual', [AdminController::class, 'penjuals'])->name('penjual');
     Route::post('/penjual/{id}/verify', [AdminController::class, 'verifyPenjual'])->name('penjual.verify');
 
-    Route::get('/barang', [AdminController::class, 'barangIndex'])->name('barang');
+    Route::get('/toko/{user}/barang', [AdminController::class, 'barangIndex'])->name('toko.barang');
     Route::get('/barang/{produk}/edit', [AdminController::class, 'barangEdit'])->name('barang.edit');
     Route::patch('/barang/{produk}', [AdminController::class, 'barangUpdate'])->name('barang.update');
+    Route::delete('/produk/{id}/hapus', [AdminController::class, 'hapusBarang'])->name('produk.hapus');
 });
 
 /*

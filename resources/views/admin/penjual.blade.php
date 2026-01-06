@@ -128,7 +128,7 @@
                                     method="POST"
                                     onsubmit="return confirm('Verifikasi penjual ini?')">
                                     @csrf
-                                    @method('PATCH')
+                                    @method('POST')
                                     <input type="hidden" name="status" value="verified">
                                     <button
                                         class="inline-flex px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
@@ -141,7 +141,7 @@
                                     method="POST"
                                     onsubmit="return confirm('Tolak penjual ini karena belum memenuhi persyaratan?')">
                                     @csrf
-                                    @method('PATCH')
+                                    @method('POST')
                                     <input type="hidden" name="status" value="rejected">
                                     <button
                                         class="inline-flex px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">

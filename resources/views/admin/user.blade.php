@@ -119,34 +119,9 @@
                   {{-- Edit (opsional) --}}
                   @if (Route::has('admin.users.edit'))
                     <a href="{{ route('admin.users.edit', $u->id) }}"
-                      class="px-3 py-1.5 rounded border text-xs hover:bg-white">
+                      class="px-3 py-1.5 rounded bg-green-600 text-white text-xs hover:bg-green-700">
                       Edit
                     </a>
-                  @endif
-
-                  {{-- Quick Update Role + Seller Status (butuh route admin.users.update) --}}
-                  @if (Route::has('admin.users.update'))
-                    <form method="POST" action="{{ route('admin.users.update', $u->id) }}" class="flex gap-2 items-center">
-                      @csrf
-                      @method('PATCH')
-
-                      <select name="role" class="rounded-md border px-2 py-1 text-xs">
-                        <option value="admin"   @selected($u->role==='admin')>admin</option>
-                        <option value="penjual" @selected($u->role==='penjual')>penjual</option>
-                        <option value="pembeli" @selected($u->role==='pembeli')>pembeli</option>
-                      </select>
-
-                      <select name="seller_status" class="rounded-md border px-2 py-1 text-xs">
-                        <option value="none"     @selected($u->seller_status==='none')>none</option>
-                        <option value="pending"  @selected($u->seller_status==='pending')>pending</option>
-                        <option value="verified" @selected($u->seller_status==='verified')>verified</option>
-                        <option value="rejected" @selected($u->seller_status==='rejected')>rejected</option>
-                      </select>
-
-                      <button class="px-3 py-1.5 rounded bg-green-600 text-white text-xs hover:bg-green-700">
-                        Simpan
-                      </button>
-                    </form>
                   @endif
 
                   {{-- Hapus (opsional) --}}

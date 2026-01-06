@@ -25,11 +25,21 @@
     </div>
 @endif
 
+@php
+    // URL asal (home / search / dll) dibawa dari ?back=
+    $back = request('back');
+
+    // keamanan: hanya izinkan URL internal (biar ga bisa redirect ke luar)
+    if (!$back || !str_starts_with($back, url('/'))) {
+        $back = route('pembeli.dashboard'); // fallback default
+    }
+@endphp
+
 <div class="max-w-6xl mx-auto px-4 py-6">
 
     {{-- Breadcrumb --}}
     <div class="text-sm text-gray-500 mb-4">
-        <a href="{{ route('pembeli.dashboard') }}" class="hover:underline">Home</a>
+        <a href="{{ $back }}" class="hover:underline">Kembali</a>
         <span class="mx-1">/</span>
         <span>{{ $produk->nama_barang }}</span>
     </div>
@@ -77,14 +87,45 @@
 
             {{-- Toko --}}
             @if ($produk->penjual)
-                <div class="pt-3 border-t">
-                    <p class="text-sm font-medium">
-                        {{ $produk->penjual->nama_toko ?? 'Toko' }}
-                    </p>
-                    <p class="text-xs text-gray-500">
-                        📍 {{ $produk->penjual->alamat_toko }}
-                    </p>
-                </div>
+                <div class="pt-4 mt-4 border-t space-y-2">
+            <h3 class="text-sm font-semibold text-gray-800">
+                Penjual
+            </h3>
+
+            <div class="flex items-start gap-2 text-sm text-gray-700">
+                {{-- Icon toko --}}
+                <svg class="w-4 h-4 mt-0.5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3 7h18M5 7l1 12h12l1-12M9 7V5a3 3 0 016 0v2"/>
+                </svg>
+                <span class="font-medium">
+                    {{ $produk->penjual->nama_toko ?? 'Toko' }}
+                </span>
+            </div>
+
+            <div class="flex items-start gap-2 text-xs text-gray-500">
+                {{-- Icon lokasi --}}
+                <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 11c1.1 0 2-.9 2-2a2 2 0 10-4 0c0 1.1.9 2 2 2z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 22s8-4.5 8-11a8 8 0 10-16 0c0 6.5 8 11 8 11z"/>
+                </svg>
+                <span>{{ $produk->penjual->alamat_toko }}</span>
+            </div>
+
+            <div class="flex items-center gap-2 text-xs text-gray-500">
+                {{-- Icon telepon --}}
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3 5a2 2 0 012-2h2l2 5-2 1a11 11 0 005 5l1-2 5 2v2a2 2 0 01-2 2A16 16 0 013 5z"/>
+                </svg>
+                <span>{{ $produk->penjual->no_telp }}</span>
+            </div>
+        </div>
             @endif
 
             {{-- Aksi --}}
@@ -98,12 +139,13 @@
                         Tambah ke Keranjang
                     </button>
                 </form>
-                <button
-                    class="flex-1 border border-green-600 text-green-700 hover:bg-green-50 text-sm py-2 rounded-md">
-                    Chat
-                </button>
             </div>
 
+            {{-- Back --}}
+            <a href="{{ $back }}"
+               class="text-xs sm:text-sm text-gray-500 hover:text-gray-700">
+                ← Kembali
+            </a>
         </div>
     </div>
 </div>
