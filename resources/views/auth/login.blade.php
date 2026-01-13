@@ -106,7 +106,7 @@
             @enderror
           </div>
 
-          <!-- {{-- REMEMBER + FORGOT --}}
+          {{-- REMEMBER + FORGOT --}}
           <div class="flex items-center justify-between text-sm">
             <label class="inline-flex items-center gap-2 text-gray-700">
               <input
@@ -123,7 +123,7 @@
                 Lupa sandi?
               </a>
             @endif
-          </div> -->
+          </div>
 
           {{-- BUTTON --}}
           <button

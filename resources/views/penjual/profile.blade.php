@@ -2,6 +2,11 @@
 @section('title','Profil — SecondLife')
 @section('content')
 <div class="bg-white rounded-lg shadow border border-gray-100 p-6">
+  @if(session('success'))
+  <div class="mb-4 rounded-md bg-green-100 border border-green-300 p-3 text-green-800 text-sm">
+    {{ session('success') }}
+  </div>
+  @endif
   <h2 class="text-lg font-semibold text-green-700">Pengaturan Toko</h2>
   <p class="text-sm text-gray-600">Nama toko, rekening, & lokasi pickup.</p>
 
@@ -13,9 +18,43 @@
     @csrf
     @method('PATCH')
 
-
     {{-- Baris 1–2: data dasar toko --}}
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-6 sm:grid-cols-2">
+      {{-- Nama --}}
+      <div>
+        <label class="block text-sm text-gray-700">Nama Penjual</label>
+        <input
+        type="text"
+        name="nama_penjual"
+        value="{{ old('name', $penjual->nama_penjual) }}"
+        required
+        maxlength="255"
+        class="mt-1 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-green-600"
+        placeholder="Nama user"
+        >
+        @error('name')
+        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+        @enderror
+      </div>
+
+      {{-- Email --}}
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Email</label>
+        <input
+        type="email"
+        name="email"
+        value="{{ old('email', $user->email) }}"
+        required
+        maxlength="255"
+        readonly
+        class="mt-1 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-green-600"
+        placeholder="email@contoh.com"
+        >
+        @error('email')
+        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+        @enderror
+      </div>
+
       <div>
         <label class="block text-sm text-gray-700">Nama Toko</label>
         <input

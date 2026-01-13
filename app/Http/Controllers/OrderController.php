@@ -120,7 +120,12 @@ class OrderController extends Controller
         $request->validate([
             'catatan' => ['nullable','string','max:500'],
             'metode_pembayaran' => ['required','in:cod,transfer'],
-            'bukti_pembayaran'  => ['nullable','required_if:metode_pembayaran,transfer','image','max:2048'],
+            'bukti_pembayaran' => [
+                'required_if:metode_pembayaran,transfer',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:2048',
+            ],
         ]);
 
         $pembeli = Pembeli::where('idUser', Auth::id())->first();
@@ -190,11 +195,10 @@ class OrderController extends Controller
                 'ongkir'            => $ongkir,
                 'total_bayar'       => $total,
 
-                'status_pesanan'    => 'pending',
+                'status_pesanan'    => 'menunggu',
                 'metode_pembayaran' => $request->metode_pembayaran,
                 'status_pembayaran' => $request->metode_pembayaran === 'transfer' ? 'menunggu_verifikasi' : 'belum_bayar',
                 'bukti_pembayaran'  => $buktiPath,
-
                 'catatan'           => $request->catatan,
             ]);
 

@@ -108,29 +108,53 @@ class ProdukController extends Controller
             ->with('success', 'Produk berhasil diperbarui.');
     }
 
+    public function tambahStok(Request $request, Produk $produk)
+    {
+        // pastikan produk milik user login
+        $this->authorizeOwner($produk);
+
+        // default tambah 1, bisa dikirim dari button
+        $jumlah = (int) ($request->input('jumlah', 1));
+
+        if ($jumlah < 1) {
+            return back()->with('error', 'Jumlah stok tidak valid.');
+        }
+
+        $produk->stok += $jumlah;
+
+        // stok-based active
+        $produk->is_active = $produk->stok > 0;
+
+        $produk->save();
+
+        return back()->with('success', 'Stok berhasil ditambahkan.');
+    }
+
+
 
     /**
      * Hapus produk (nanti diselesaikan).
      */
     public function destroy(Produk $produk)
     {
-        // pastikan produk milik user yg login
         if ($produk->user_id !== auth()->id()) {
-            abort(403, 'Kamu tidak berhak menghapus produk ini.');
+            abort(403);
         }
 
-        // hapus gambar dari storage
+        if ($produk->orderItems()->exists()) {
+            return back()->with('error', 'Produk tidak bisa dihapus karena sudah pernah dibeli.');
+        }
+
         if ($produk->gambar && Storage::disk('public')->exists($produk->gambar)) {
             Storage::disk('public')->delete($produk->gambar);
         }
 
-        // hapus produk dari database
         $produk->delete();
 
-        return redirect()
-            ->route('produk.index')
-            ->with('success', 'Produk berhasil dihapus.');
+        return back()->with('success', 'Produk berhasil dihapus.');
     }
+
+
 
     /**
      * Cek apakah produk milik user yang login.

@@ -55,7 +55,7 @@ class OrderMasukController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $data = $request->validate([
-            'status' => 'required|in:dikemas,dikirim,selesai,ditolak,menunggu,dibayar',
+            'status' => 'required|in:menunggu,dikemas,dikirim,selesai,ditolak',
         ]);
 
         $order->status_pesanan = $data['status'];

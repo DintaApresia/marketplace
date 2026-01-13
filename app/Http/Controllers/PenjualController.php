@@ -8,6 +8,7 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 class PenjualController extends Controller
 {
@@ -144,6 +145,7 @@ class PenjualController extends Controller
         }
 
         $data = $request->validate([
+            'nama_penjual' => 'nullable|string|max:100',
             'nama_toko'    => 'nullable|string|max:100',
             'no_telp'      => 'nullable|string|max:30',
             'nama_rekening'=> 'nullable|string|max:100',
@@ -155,6 +157,7 @@ class PenjualController extends Controller
         ]);
 
         $penjual = Penjual::firstOrNew(['user_id' => $user->id]);
+        $penjual->nama_penjual       = $data['nama_penjual']       ?? $penjual->nama_penjual;
         $penjual->nama_toko       = $data['nama_toko']       ?? $penjual->nama_toko;
         $penjual->no_telp         = $data['no_telp']         ?? $penjual->no_telp;
         $penjual->nama_rekening   = $data['nama_rekening']   ?? $penjual->nama_rekening;
@@ -218,51 +221,51 @@ class PenjualController extends Controller
         ));
     }
 
-    public function downloadLaporan()
+    public function laporan(Request $request)
     {
         $sellerId = Auth::id();
 
-        $totalProduk = Produk::where('user_id', $sellerId)->count();
+        // =====================
+        // PERIODE
+        // =====================
+        $startDate = $request->tanggal_mulai
+            ? Carbon::parse($request->tanggal_mulai)->startOfDay()
+            : now()->startOfMonth();
 
-        // kalau pakai is_active:
+        $endDate = $request->tanggal_selesai
+            ? Carbon::parse($request->tanggal_selesai)->endOfDay()
+            : now()->endOfMonth();
+
+        // =====================
+        // PRODUK
+        // =====================
+        $totalProduk = Produk::where('user_id', $sellerId)->count();
         $produkAktif = Produk::where('user_id', $sellerId)->where('is_active', 1)->count();
         $produkNonaktif = Produk::where('user_id', $sellerId)->where('is_active', 0)->count();
 
-        // status pesanan
-        $pesananDikemas = Order::where('status_pesanan', 'dikemas')
+        // =====================
+        // PESANAN (PERIODE)
+        // =====================
+        $baseOrderQuery = Order::whereBetween('created_at', [$startDate, $endDate])
             ->whereHas('items.produk', function ($q) use ($sellerId) {
                 $q->where('user_id', $sellerId);
-            })
-            ->count();
+            });
 
-        $pesananDikirim = Order::where('status_pesanan', 'dikirim')
-            ->whereHas('items.produk', function ($q) use ($sellerId) {
-                $q->where('user_id', $sellerId);
-            })
-            ->count();
-
-        $pesananSelesai = Order::where('status_pesanan', 'selesai')
-            ->whereHas('items.produk', function ($q) use ($sellerId) {
-                $q->where('user_id', $sellerId);
-            })
-            ->count();
-
-        $pesananDitolak = Order::where('status_pesanan', 'ditolak')
-            ->whereHas('items.produk', function ($q) use ($sellerId) {
-                $q->where('user_id', $sellerId);
-            })
-            ->count();
-
-        // TOTAL NOMINAL TERJUAL (HANYA PESANAN SELESAI)
-        $totalTerjual = Order::where('status_pesanan', 'selesai')
-            ->whereHas('items.produk', function ($q) use ($sellerId) {
-                $q->where('user_id', $sellerId);
-            })
-            ->sum('total_bayar'); // ⬅️ ganti jika nama kolom beda
+        $pesananDikemas = (clone $baseOrderQuery)->where('status_pesanan', 'dikemas')->count();
+        $pesananDikirim = (clone $baseOrderQuery)->where('status_pesanan', 'dikirim')->count();
+        $pesananSelesai = (clone $baseOrderQuery)->where('status_pesanan', 'selesai')->count();
+        $pesananDitolak = (clone $baseOrderQuery)->where('status_pesanan', 'ditolak')->count();
 
         $pesananMasuk = $pesananDikemas + $pesananDikirim + $pesananSelesai + $pesananDitolak;
 
-        $data = compact(
+        // =====================
+        // TOTAL TERJUAL (PERIODE)
+        // =====================
+        $totalTerjual = (clone $baseOrderQuery)
+            ->where('status_pesanan', 'selesai')
+            ->sum('total_bayar');
+
+        return view('penjual.laporan_dashboard', compact(
             'totalProduk',
             'produkAktif',
             'produkNonaktif',
@@ -271,12 +274,29 @@ class PenjualController extends Controller
             'pesananDikirim',
             'pesananSelesai',
             'pesananDitolak',
-            'totalTerjual'
+            'totalTerjual',
+            'startDate',
+            'endDate'
+        ));
+    }
+
+    public function downloadLaporan(Request $request)
+    {
+        $request->merge([
+            'tanggal_mulai' => $request->tanggal_mulai,
+            'tanggal_selesai' => $request->tanggal_selesai,
+        ]);
+
+        $data = $this->laporan($request)->getData();
+
+        $pdf = Pdf::loadView('penjual.laporan_pdf', (array) $data)
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download(
+            'laporan-penjual-' .
+            $request->tanggal_mulai . '-' .
+            $request->tanggal_selesai . '.pdf'
         );
-
-        $pdf = Pdf::loadView('penjual.laporan_dashboard_pdf', $data)->setPaper('a4', 'portrait');
-
-        return $pdf->download('laporan-dashboard-penjual.pdf');
     }
 
 }

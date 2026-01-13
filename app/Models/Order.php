@@ -16,6 +16,7 @@ class Order extends Model
         'total_bayar',
         'metode_pembayaran',
         'status_pembayaran',
+        'bukti_pembayaran',
         'status_pesanan',
         'catatan',
     ];

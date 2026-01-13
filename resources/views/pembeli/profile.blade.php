@@ -45,6 +45,7 @@
                 <input type="email"
                     name="email"
                     value="{{ old('email', $user->email) }}"
+                    readonly
                     class="mt-1 w-full border rounded-md px-3 py-2 text-sm focus:ring-green-600 focus:border-green-600 @error('email') border-red-500 @enderror"
                     placeholder="email@contoh.com">
 
@@ -79,7 +80,7 @@
                 @enderror
             </div>
 
-            {{-- Password --}}
+            <!-- {{-- Password --}}
             <div class="relative">
                 <label class="text-sm font-medium text-gray-700">Password Baru</label>
 
@@ -125,9 +126,9 @@
                 @error('password')
                     <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                 @enderror
-            </div>
+            </div> -->
 
-            {{-- Konfirmasi Password --}}
+            <!-- {{-- Konfirmasi Password --}}
             <div class="relative">
                 <label class="text-sm font-medium text-gray-700">Konfirmasi Password</label>
 
@@ -160,7 +161,7 @@
                             d="M3 3l18 18"/>
                     </svg>
                 </button>
-            </div>
+            </div> -->
 
             {{-- Tombol --}}
             <div class="sm:col-span-2">

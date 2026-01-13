@@ -30,15 +30,6 @@
                             class="w-9 h-9 rounded-full border"
                         >
                     </div>
-
-                    <form action="{{ route('logout') }}" method="POST">
-                        @csrf
-                        <button
-                            type="submit"
-                            class="px-3 py-1.5 bg-red-500 text-white rounded-md text-xs hover:bg-red-600">
-                            Logout
-                        </button>
-                    </form>
                 </div>
         </div>
     </header>
@@ -79,7 +70,22 @@
                     : 'text-gray-700' }}">
                 Pesanan Masuk
             </a>
+            <a href="{{ route('penjual.laporan') }}"
+               class="block px-3 py-2 rounded-md transition hover:bg-green-50
+               {{ request()->routeIs('penjual.laporan')
+                    ? 'bg-green-100 text-green-700 font-semibold'
+                    : 'text-gray-700' }}">
+                Laporan Penjualan
+            </a>
 
+            <form action="{{ route('logout') }}" method="POST" onsubmit="return confirm('Yakin ingin keluar?')">
+                @csrf
+                <button
+                    type="submit"
+                    class="w-full text-left px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 mt-4">
+                    Logout
+                </button>
+            </form>
         </nav>
     </aside>
 

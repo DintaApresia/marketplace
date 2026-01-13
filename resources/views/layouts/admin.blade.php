@@ -27,21 +27,30 @@
             </a>
 
             <a href="{{ route('admin.user') }}"
-               class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+            class="block px-3 py-2 rounded-lg
+            {{ request()->routeIs('admin.user')
+                ? 'bg-gray-200 font-semibold text-gray-900'
+                : 'text-gray-700 hover:bg-gray-100' }}">
                 Kelola User
             </a>
 
             <a href="{{ route('admin.penjual') }}"
-                class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                class="block px-3 py-2 rounded-lg
+            {{ request()->routeIs('admin.penjual')
+                ? 'bg-gray-200 font-semibold text-gray-900'
+                : 'text-gray-700 hover:bg-gray-100' }}">
                 Verifikasi Penjual
             </a>
 
             <a href="{{ route('admin.toko.show') }}"
-               class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
-                Kelola Toko
+               class="block px-3 py-2 rounded-lg
+            {{ request()->routeIs('admin.toko.show')
+                ? 'bg-gray-200 font-semibold text-gray-900'
+                : 'text-gray-700 hover:bg-gray-100' }}">
+                Kelola Produk Penjual
             </a>
 
-            <form action="/logout" method="POST">
+            <form action="/logout" method="POST" onsubmit="return confirm('Yakin ingin keluar?')">
                 @csrf
                 <button
                     class="w-full text-left px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 mt-4">
@@ -82,9 +91,9 @@
                 </a>
 
 
-                <a href="#"
+                <a href="{{ route('admin.toko.show') }}"
                    class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
-                    Kelola Barang
+                    Kelola Penjual
                 </a>
             </nav>
         </div>

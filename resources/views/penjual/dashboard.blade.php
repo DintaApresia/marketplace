@@ -4,13 +4,6 @@
 
 @section('content')
 
-<div class="mb-4 flex justify-end">
-    <a href="{{ route('penjual.dashboard.laporan') }}"
-       class="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
-        ⬇️ Download Laporan (PDF)
-    </a>
-</div>
-
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
     {{-- STATUS TOKO (INFO SAJA) --}}

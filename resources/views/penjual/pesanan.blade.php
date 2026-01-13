@@ -164,6 +164,7 @@
                       <select name="status"
                               class="text-xs border-gray-300 rounded-md focus:ring-0 focus:border-gray-400"
                               onchange="this.form.submit()">
+                        <option value="dikemas" @selected($status=='dikemas')>Menunggu</option>
                         <option value="dikemas" @selected($status=='dikemas')>Dikemas</option>
                         <option value="dikirim" @selected($status=='dikirim')>Dikirim</option>
                         <option value="selesai" @selected($status=='selesai')>Selesai</option>

@@ -131,7 +131,8 @@ Route::middleware('auth')
         // Khusus yang sudah role:penjual
         Route::middleware('role:penjual')->group(function () {
             Route::get('/dashboard', [PenjualController::class, 'dashboard'])->name('dashboard');
-            Route::get('/dashboard/laporan', [PenjualController::class, 'downloadLaporan'])->name('dashboard.laporan');
+            Route::get('/download/laporan', [PenjualController::class, 'downloadLaporan'])->name('download.laporan');
+            Route::get('/laporan', [PenjualController::class, 'laporan'])->name('laporan');
 
             Route::get('/profile', [PenjualController::class, 'profile'])->name('profile');
             Route::patch('/profile', [PenjualController::class, 'updateProfile'])->name('profile.update');
@@ -182,4 +183,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/produk', [ProdukController::class, 'store'])->name('produk.store');
     Route::put('/produk/{produk}', [ProdukController::class, 'update'])->name('produk.update');
     Route::delete('/produk/{produk}', [ProdukController::class, 'destroy'])->name('produk.destroy');
+    Route::post('/produk/{produk}/tambah-stok', [ProdukController::class, 'tambahStok'])->name('produk.tambahStok');
+
 });

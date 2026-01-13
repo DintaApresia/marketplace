@@ -49,9 +49,10 @@
                 <div>
                     <label class="text-sm font-medium">Catatan (opsional)</label>
                     <input type="text"
-                           name="catatan"
-                           class="mt-1 w-full rounded-lg border p-2"
-                           placeholder="Misal: taruh di pos satpam">
+                        name="catatan"
+                        class="mt-1 w-full rounded-lg border p-2"
+                        placeholder="Misal: taruh di pos satpam"
+                        value="{{ old('catatan') }}">
                 </div>
             </div>
 

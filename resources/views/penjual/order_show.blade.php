@@ -28,8 +28,6 @@
     </div>
   </div>
 
-
-
   @php
     // helper URL gambar review (support storage path / full url)
     $imgUrl = function ($path) {
@@ -68,8 +66,11 @@
           <tr>
             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Produk</th>
             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Harga</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Bukti Pembayaran</th>
             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Qty</th>
             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Subtotal</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Catatan</th>
+
           </tr>
         </thead>
 
@@ -109,12 +110,44 @@
                 Rp {{ number_format($harga, 0, ',', '.') }}
               </td>
 
+              <td class="px-4 py-3">
+                @if($order->metode_pembayaran === 'transfer')
+                  @if(!empty($order->bukti_pembayaran))
+                    <a href="{{ asset('storage/'.$order->bukti_pembayaran) }}" target="_blank"
+                      class="block w-12 h-12 rounded overflow-hidden bg-gray-100 border hover:opacity-90">
+                      <img
+                        src="{{ asset('storage/'.$order->bukti_pembayaran) }}"
+                        class="w-full h-full object-cover"
+                        alt="Bukti Pembayaran">
+                    </a>
+                  @else
+                    <span class="text-xs text-red-500 italic">Belum diupload</span>
+                  @endif
+                @else
+                  <span class="text-xs text-gray-400 italic">COD</span>
+                @endif
+              </td>
+
+
               <td class="px-4 py-3 whitespace-nowrap">
                 {{ $qty }}
               </td>
 
               <td class="px-4 py-3 whitespace-nowrap font-semibold">
                 Rp {{ number_format($sub, 0, ',', '.') }}
+              </td>
+
+              {{-- CATATAN --}}
+              <td class="px-4 py-3 max-w-xs">
+                @if(!empty($order->catatan))
+                  <div class="text-sm text-gray-700 break-words">
+                    {{ $order->catatan }}
+                  </div>
+                @else
+                  <span class="text-xs text-gray-400 italic">
+                    Tidak ada catatan
+                  </span>
+                @endif
               </td>
             </tr>
           @endforeach

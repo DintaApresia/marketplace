@@ -15,12 +15,20 @@
 
 <div class="max-w-5xl mx-auto px-4 py-6">
 
+    {{-- ALERT ERROR --}}
+    @if (session('error'))
+        <div class="mb-4 p-3 bg-red-100 text-red-800 rounded">
+            {{ session('error') }}
+        </div>
+    @endif
+
     {{-- ALERT SUCCESS --}}
     @if (session('success'))
         <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">
             {{ session('success') }}
         </div>
     @endif
+
 
     {{-- HEADER + BUTTON --}}
     <div class="flex items-center justify-between mb-4 w-full">
@@ -86,18 +94,36 @@
 
                                 {{-- Aksi --}}
                                 <div class="flex items-center justify-between mt-3 text-sm">
+                                    {{-- EDIT --}}
                                     <button type="button"
-                                            onclick="openEditForm({{ $produk->id }})"
-                                            class="text-blue-600 hover:underline">
+                                        onclick="openEditForm({{ $produk->id }})"
+                                        class="px-2 py-1 text-xs bg-white border border-gray-300 text-gray-700 rounded
+                                            hover:bg-gray-100">
                                         Edit
                                     </button>
 
+                                    {{-- TAMBAH STOK --}}
+                                    <form action="{{ route('produk.tambahStok', $produk->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit"
+                                            class="px-2 py-1 text-xs bg-green-600 text-white rounded
+                                                hover:bg-green-700">
+                                            + Stok
+                                        </button>
+                                    </form>
+
+                                    {{-- HAPUS --}}
                                     <form action="{{ route('produk.destroy', $produk->id) }}" method="POST"
                                         onsubmit="return confirm('Yakin ingin menghapus produk ini?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button class="text-red-600 hover:underline">Hapus</button>
+                                        <button
+                                            class="px-2 py-1 text-xs bg-red-600 text-white rounded
+                                                hover:bg-red-700">
+                                            Hapus
+                                        </button>
                                     </form>
+
                                 </div>
                             </div>
 

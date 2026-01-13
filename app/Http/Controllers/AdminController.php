@@ -102,10 +102,6 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required','string','max:255'],
-            'email' => [
-                'required','email','max:255',
-                Rule::unique('users','email')->ignore($user->id),
-            ],
             'role' => ['required', Rule::in(['admin','penjual','pembeli'])],
             'seller_status' => ['required', Rule::in(['none','pending','verified','rejected'])],
             'password' => ['nullable','string','min:8','confirmed'],
@@ -113,7 +109,6 @@ class AdminController extends Controller
 
         // update field WAJIB
         $user->name = $validated['name'];
-        $user->email = $validated['email'];
         $user->role = $validated['role'];
         $user->seller_status = $validated['seller_status'];
 
