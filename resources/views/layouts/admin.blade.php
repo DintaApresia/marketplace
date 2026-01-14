@@ -1,131 +1,131 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-100">
 
-<div class="flex h-screen">
+<body class="bg-gray-100 text-gray-800">
 
-    {{-- Sidebar --}}
-    <aside class="w-64 bg-white shadow-md border-r hidden md:block">
-        <div class="p-4 border-b">
-            <h1 class="text-xl font-bold text-gray-800">Admin Panel</h1>
+<div class="flex h-screen overflow-hidden">
+
+    {{-- ================= SIDEBAR DESKTOP ================= --}}
+    <aside class="hidden md:flex md:flex-col w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-gray-100 shadow-lg">
+
+        {{-- Logo --}}
+        <div class="px-6 py-5 border-b border-gray-700">
+            <h1 class="text-xl font-bold tracking-wide">Admin Panel</h1>
+            <p class="text-xs text-gray-400">SecondLife Marketplace</p>
         </div>
 
-        <nav class="mt-4 px-4 space-y-2">
+        {{-- Menu --}}
+        <nav class="flex-1 px-4 py-4 space-y-2 text-sm">
+
+            @php
+                $active = 'bg-gray-700 text-white font-semibold';
+                $normal = 'text-gray-300 hover:bg-gray-700 hover:text-white';
+            @endphp
 
             <a href="{{ route('admin.dashboard') }}"
-            class="block px-3 py-2 rounded-lg
-            {{ request()->routeIs('admin.dashboard')
-                ? 'bg-gray-200 font-semibold text-gray-900'
-                : 'text-gray-700 hover:bg-gray-100' }}">
-                Dashboard
+               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
+               {{ request()->routeIs('admin.dashboard') ? $active : $normal }}">
+                📊 <span>Dashboard</span>
             </a>
 
             <a href="{{ route('admin.user') }}"
-            class="block px-3 py-2 rounded-lg
-            {{ request()->routeIs('admin.user')
-                ? 'bg-gray-200 font-semibold text-gray-900'
-                : 'text-gray-700 hover:bg-gray-100' }}">
-                Kelola User
+               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
+               {{ request()->routeIs('admin.user') ? $active : $normal }}">
+                👤 <span>Kelola User</span>
             </a>
 
             <a href="{{ route('admin.penjual') }}"
-                class="block px-3 py-2 rounded-lg
-            {{ request()->routeIs('admin.penjual')
-                ? 'bg-gray-200 font-semibold text-gray-900'
-                : 'text-gray-700 hover:bg-gray-100' }}">
-                Verifikasi Penjual
+               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
+               {{ request()->routeIs('admin.penjual') ? $active : $normal }}">
+                🛒 <span>Verifikasi Penjual</span>
             </a>
 
             <a href="{{ route('admin.toko.show') }}"
-               class="block px-3 py-2 rounded-lg
-            {{ request()->routeIs('admin.toko.show')
-                ? 'bg-gray-200 font-semibold text-gray-900'
-                : 'text-gray-700 hover:bg-gray-100' }}">
-                Kelola Produk Penjual
+               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
+               {{ request()->routeIs('admin.toko.show') ? $active : $normal }}">
+                📦 <span>Produk Penjual</span>
             </a>
 
+        </nav>
+
+        {{-- Logout --}}
+        <div class="px-4 py-4 border-t border-gray-700">
             <form action="/logout" method="POST" onsubmit="return confirm('Yakin ingin keluar?')">
                 @csrf
-                <button
-                    class="w-full text-left px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 mt-4">
-                    Logout
+                <button class="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-red-400 hover:bg-red-500 hover:text-white transition">
+                    🚪 Logout
                 </button>
             </form>
+        </div>
 
-        </nav>
     </aside>
 
-    {{-- Mobile sidebar button --}}
-    <div class="md:hidden fixed top-4 left-4 z-50">
-        <button id="openSidebar" class="p-2 bg-white shadow rounded">
-            ☰
-        </button>
+    {{-- ================= MOBILE SIDEBAR ================= --}}
+    <div id="mobileSidebar"
+         class="fixed inset-0 z-40 bg-black/50 hidden">
+        <aside class="w-64 h-full bg-gray-900 text-gray-100 shadow-lg p-4 animate-slide-in">
+            <button id="closeSidebar" class="text-gray-400 mb-4">✕ Tutup</button>
+
+            <nav class="space-y-2 text-sm">
+                <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 rounded hover:bg-gray-700">Dashboard</a>
+                <a href="{{ route('admin.user') }}" class="block px-4 py-2 rounded hover:bg-gray-700">Kelola User</a>
+                <a href="{{ route('admin.penjual') }}" class="block px-4 py-2 rounded hover:bg-gray-700">Verifikasi Penjual</a>
+                <a href="{{ route('admin.toko.show') }}" class="block px-4 py-2 rounded hover:bg-gray-700">Produk Penjual</a>
+            </nav>
+        </aside>
     </div>
 
-    {{-- Mobile sidebar --}}
-    <aside id="mobileSidebar"
-           class="fixed inset-0 bg-black bg-opacity-40 hidden z-40">
-        <div class="w-64 bg-white h-full shadow-md p-4">
-            <button id="closeSidebar" class="mb-4 text-gray-600">✕</button>
+    {{-- ================= MAIN AREA ================= --}}
+    <div class="flex-1 flex flex-col">
 
-            <nav class="space-y-2">
-                <a href="{{ route('admin.dashboard') }}"
-                   class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
-                    Dashboard
-                </a>
+        {{-- Topbar --}}
+        <header class="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <button id="openSidebar" class="md:hidden text-xl">☰</button>
+                <h2 class="text-lg font-semibold">@yield('title', 'Dashboard')</h2>
+            </div>
 
-                <a href="{{ route('admin.user') }}"
-                   class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
-                    Kelola User
-                </a>
+            <div class="text-sm text-gray-600">
+                Admin
+            </div>
+        </header>
 
-                <a href="{{ route('admin.penjual') }}"
-                    class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
-                        Verifikasi Penjual
-                </a>
+        {{-- Content --}}
+        <main class="flex-1 overflow-y-auto p-6">
+            @yield('content')
+        </main>
 
-
-                <a href="{{ route('admin.toko.show') }}"
-                   class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
-                    Kelola Penjual
-                </a>
-            </nav>
-        </div>
-    </aside>
-
-    {{-- Main Content --}}
-    <main class="flex-1 overflow-y-auto p-6">
-        @yield('content')
-    </main>
+    </div>
 
 </div>
 
+{{-- SCRIPT --}}
 <script>
-    // Mobile sidebar toggle
     const openSidebar = document.getElementById('openSidebar');
     const closeSidebar = document.getElementById('closeSidebar');
     const mobileSidebar = document.getElementById('mobileSidebar');
 
-    openSidebar && openSidebar.addEventListener('click', () => {
+    openSidebar?.addEventListener('click', () => {
         mobileSidebar.classList.remove('hidden');
     });
 
-    closeSidebar && closeSidebar.addEventListener('click', () => {
+    closeSidebar?.addEventListener('click', () => {
         mobileSidebar.classList.add('hidden');
     });
 
-    mobileSidebar && mobileSidebar.addEventListener('click', (e) => {
+    mobileSidebar?.addEventListener('click', e => {
         if (e.target === mobileSidebar) {
             mobileSidebar.classList.add('hidden');
         }
     });
 </script>
+
 @stack('scripts')
 </body>
 </html>

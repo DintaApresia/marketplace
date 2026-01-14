@@ -37,12 +37,14 @@
         </a>
 
         <a href="{{ route('pembeli.keranjang') }}"
-           class="{{ request()->routeIs('pembeli.keranjang') ? 'text-green-700 font-semibold border-b-2 border-green-700 pb-1' : 'text-gray-700 hover:text-green-700' }}">
+          data-login-required
+          class="{{ request()->routeIs('pembeli.keranjang') ? 'text-green-700 font-semibold border-b-2 border-green-700 pb-1' : 'text-gray-700 hover:text-green-700' }}">
           Keranjang
         </a>
 
         <a href="{{ route('pembeli.profile') }}"
-           class="{{ request()->routeIs('pembeli.profile') ? 'text-green-700 font-semibold border-b-2 border-green-700 pb-1' : 'text-gray-700 hover:text-green-700' }}">
+          data-login-required
+          class="{{ request()->routeIs('pembeli.profile') ? 'text-green-700 font-semibold border-b-2 border-green-700 pb-1' : 'text-gray-700 hover:text-green-700' }}">
           Profile
         </a>
       </nav>
@@ -109,6 +111,20 @@
   <footer class="mt-10 border-t py-6 text-center text-sm text-gray-500">
     © {{ now()->year }} SecondLife. All rights reserved.
   </footer>
+
+  <script>
+  document.addEventListener('click', function (e) {
+      const target = e.target.closest('[data-login-required]');
+      if (!target) return;
+
+      @if(auth()->guest())
+          e.preventDefault();
+          alert('Silakan login terlebih dahulu');
+          window.location.href = "{{ route('login') }}";
+      @endif
+  });
+  </script>
+
 
   {{-- PAGE-LEVEL SCRIPTS (from @push('scripts')) --}}
   @stack('scripts')

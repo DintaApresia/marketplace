@@ -242,20 +242,49 @@ class OrderController extends Controller
         return view('pembeli.order_sukses', compact('order'));
     }
 
-    public function show(Order $order)
+    public function selesai(Order $order)
     {
+        // Validasi kepemilikan
         if ($order->user_id !== Auth::id()) {
             abort(403);
         }
 
-        $status = $order->status_pesanan ?? $order->status ?? '';
+        // Hanya boleh dari status dikirim
+        if (($order->status_pesanan ?? $order->status) !== 'dikirim') {
+            return back()->with('error', 'Pesanan belum dapat diselesaikan.');
+        }
+
+        $order->update([
+            'status_pesanan'  => 'selesai',
+            'tanggal_selesai' => now(),
+        ]);
+
+        // Kembali ke riwayat pesanan (BUKAN detail)
+        return back()->with('success', 'Pesanan berhasil diselesaikan.');
+    }
+
+    public function show(Order $order)
+    {
+        // Validasi kepemilikan
+        if ($order->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Halaman detail hanya untuk selesai
+        $status = $order->status_pesanan ?? $order->status;
+
         if ($status !== 'selesai') {
             abort(404);
         }
 
-        $order->load(['items.produk', 'ratings']);
+        $order->load([
+            'items.produk',
+            'ratings',
+        ]);
 
-        $rated = $order->ratings->keyBy('produk_id');
+        $rated = $order->ratings
+            ->whereNotNull('produk_id')
+            ->keyBy('produk_id');
 
         return view('pembeli.order_selesai', compact('order', 'rated'));
     }

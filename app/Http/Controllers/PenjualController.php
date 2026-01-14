@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class PenjualController extends Controller
 {
@@ -221,13 +222,10 @@ class PenjualController extends Controller
         ));
     }
 
-    public function laporan(Request $request)
+    private function getLaporanData(Request $request)
     {
         $sellerId = Auth::id();
 
-        // =====================
-        // PERIODE
-        // =====================
         $startDate = $request->tanggal_mulai
             ? Carbon::parse($request->tanggal_mulai)->startOfDay()
             : now()->startOfMonth();
@@ -236,20 +234,12 @@ class PenjualController extends Controller
             ? Carbon::parse($request->tanggal_selesai)->endOfDay()
             : now()->endOfMonth();
 
-        // =====================
-        // PRODUK
-        // =====================
         $totalProduk = Produk::where('user_id', $sellerId)->count();
         $produkAktif = Produk::where('user_id', $sellerId)->where('is_active', 1)->count();
         $produkNonaktif = Produk::where('user_id', $sellerId)->where('is_active', 0)->count();
 
-        // =====================
-        // PESANAN (PERIODE)
-        // =====================
         $baseOrderQuery = Order::whereBetween('created_at', [$startDate, $endDate])
-            ->whereHas('items.produk', function ($q) use ($sellerId) {
-                $q->where('user_id', $sellerId);
-            });
+            ->whereHas('items.produk', fn ($q) => $q->where('user_id', $sellerId));
 
         $pesananDikemas = (clone $baseOrderQuery)->where('status_pesanan', 'dikemas')->count();
         $pesananDikirim = (clone $baseOrderQuery)->where('status_pesanan', 'dikirim')->count();
@@ -258,14 +248,31 @@ class PenjualController extends Controller
 
         $pesananMasuk = $pesananDikemas + $pesananDikirim + $pesananSelesai + $pesananDitolak;
 
-        // =====================
-        // TOTAL TERJUAL (PERIODE)
-        // =====================
         $totalTerjual = (clone $baseOrderQuery)
             ->where('status_pesanan', 'selesai')
             ->sum('total_bayar');
 
-        return view('penjual.laporan_dashboard', compact(
+        /* 🔥 RINCIAN PRODUK TERJUAL — TABEL `produk` */
+        $produkTerjual = DB::table('order_items')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->join('produk', 'order_items.produk_id', '=', 'produk.id')
+            ->join('users', 'orders.user_id', '=', 'users.id')
+            ->where('produk.user_id', $sellerId)
+            ->where('orders.status_pesanan', 'selesai')
+            ->whereBetween('orders.created_at', [$startDate, $endDate])
+            ->select(
+                'produk.nama_barang',
+                'order_items.jumlah',
+                'order_items.subtotal_item',
+                'users.name as nama_pembeli',
+                'orders.created_at as tanggal_pembelian'
+            )
+            ->orderBy('orders.created_at', 'desc')
+            ->get();
+
+        $totalSubtotal = $produkTerjual->sum('subtotal_item');
+
+        return compact(
             'totalProduk',
             'produkAktif',
             'produkNonaktif',
@@ -275,28 +282,30 @@ class PenjualController extends Controller
             'pesananSelesai',
             'pesananDitolak',
             'totalTerjual',
+            'produkTerjual',
+            'totalSubtotal',
             'startDate',
             'endDate'
-        ));
+        );
     }
+
+    public function laporan(Request $request)
+    {
+        return view('penjual.laporan_dashboard', $this->getLaporanData($request));
+    }
+
 
     public function downloadLaporan(Request $request)
     {
-        $request->merge([
-            'tanggal_mulai' => $request->tanggal_mulai,
-            'tanggal_selesai' => $request->tanggal_selesai,
-        ]);
+        $data = $this->getLaporanData($request);
 
-        $data = $this->laporan($request)->getData();
-
-        $pdf = Pdf::loadView('penjual.laporan_pdf', (array) $data)
-            ->setPaper('a4', 'portrait');
-
-        return $pdf->download(
-            'laporan-penjual-' .
-            $request->tanggal_mulai . '-' .
-            $request->tanggal_selesai . '.pdf'
-        );
+        return Pdf::loadView('penjual.laporan_pdf', $data)
+            ->setPaper('a4', 'portrait')
+            ->download(
+                'laporan-penjual-' .
+                $data['startDate']->format('Ymd') . '-' .
+                $data['endDate']->format('Ymd') . '.pdf'
+            );
     }
 
 }

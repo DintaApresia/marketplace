@@ -10,6 +10,7 @@ use App\Http\Controllers\PencarianController;
 use App\Http\Controllers\KeranjangController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderMasukController;
+use App\Http\Controllers\PublicDashboardController;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 /*
@@ -17,7 +18,15 @@ use Barryvdh\DomPDF\Facade\Pdf;
 | Landing
 |--------------------------------------------------------------------------
 */
-Route::get('/', fn () => redirect()->route('login'));
+Route::get('/', function () {
+    return redirect()->route('dashboard.public');
+});
+
+// Route::get('/', function () {
+//     return redirect()->route('login');
+// });
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -31,43 +40,49 @@ require __DIR__.'/auth.php';
 | Redirect /dashboard sesuai role
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth')->get('/dashboard', function () {
-    $user = auth()->user();
+// Dashboard publik
+Route::get('/dashboard', [PublicDashboardController::class, 'index'])
+    ->name('dashboard.public');
 
-    return match ($user->role) {
-        'admin'  => redirect()->route('admin.dashboard'),
-        'penjual'=> redirect()->route('penjual.dashboard'),
-        default  => redirect()->route('pembeli.dashboard'),
+Route::middleware('auth')->get('/dashboard/auth', function () {
+    return match (auth()->user()->role) {
+        'admin'   => redirect()->route('admin.dashboard'),
+        'penjual' => redirect()->route('penjual.dashboard'),
+        'pembeli' => redirect()->route('pembeli.dashboard'),
+        default   => abort(403),
     };
-})->name('dashboard');
+})->name('dashboard.auth');
+
+
 
 /*
 |--------------------------------------------------------------------------
 | Profile umum (Breeze: update & delete akun)
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth')->group(function () {
+// Route::middleware('auth')->group(function () {
 
-    // GET /profile -> redirect ke profile sesuai role
-    Route::get('/profile', function () {
-        $user = auth()->user();
+//     // GET /profile -> redirect ke profile sesuai role
+//     Route::get('/profile', function () {
+//         $user = auth()->user();
 
-        return match ($user->role) {
-            'penjual' => redirect()->route('penjual.profile'),
-            'pembeli' => redirect()->route('pembeli.profile'),
-            default   => redirect()->route('dashboard'),
-        };
-    })->name('profile');
+//         return match ($user->role) {
+//             'penjual' => redirect()->route('penjual.profile'),
+//             'pembeli' => redirect()->route('pembeli.profile'),
+//             default   => redirect()->route('dashboard'),
+//         };
+//     })->name('profile');
 
-    Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
+//     Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
+//     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+// });
 
 /*
 |--------------------------------------------------------------------------
 | Area Pembeli
 |--------------------------------------------------------------------------
 */
+
 Route::middleware(['auth', 'role:pembeli'])
     ->prefix('pembeli')
     ->name('pembeli.')
@@ -93,7 +108,11 @@ Route::middleware(['auth', 'role:pembeli'])
         // sukses
         Route::get('/orders/{orderId}/sukses', [OrderController::class, 'sukses']) ->name('orders.sukses');
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
-        Route::get('/orders/{order}/selesai', [OrderController::class, 'orderSelesai'])->name('orders.selesai');
+        // Aksi terima barang (tanpa lihat detail)
+        Route::patch('/orders/{order}/selesai',[OrderController::class, 'selesai'])->name('orders.selesai');
+
+    // Detail order (HANYA setelah selesai)
+        // Route::get('/orders/{order}',[OrderController::class, 'show'])->name('orders.show');
         Route::post('/orders/{order}/rating', [OrderController::class, 'storeRating'])->name('orders.rating.store');
         // Hasil pencarian
         // Route::get('/hasilpencarian', [PencarianController::class, 'produk'])->name('hasilpencarian');

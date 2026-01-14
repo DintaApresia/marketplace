@@ -22,7 +22,8 @@
               <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Total Produk</th>
               <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Total Order</th>
               <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-              <th class="px-4 py-3"></th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Pesanan Selesai</th>
+              <!-- <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Aksi</th> -->
             </tr>
           </thead>
 
@@ -113,7 +114,35 @@
                     </span>
                   </td>
 
-                  {{-- AKSI --}}
+                  {{-- PESANAN (TERIMA BARANG / LIHAT DETAIL) --}}
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    @if($order->status_pesanan === 'dikirim')
+                      <form action="{{ route('pembeli.orders.selesai', $order->id) }}"
+                            method="POST"
+                            onsubmit="return confirm('Yakin sudah menerima barang?')">
+                        @csrf
+                        @method('PATCH')
+
+                        <button
+                          type="submit"
+                          class="inline-flex items-center px-3 py-1.5 rounded-md
+                                text-xs font-semibold bg-green-600 text-white hover:bg-green-700">
+                          Terima Barang
+                        </button>
+                      </form>
+
+                    @elseif($order->status_pesanan === 'selesai')
+                      <a href="{{ route('pembeli.orders.show', $order->id) }}"
+                        class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+                        Lihat Detail
+                      </a>
+
+                    @else
+                      <span class="text-xs text-gray-400">—</span>
+                    @endif
+                  </td>
+
+                  <!-- {{-- AKSI --}}
                   <td class="px-4 py-3 text-right whitespace-nowrap">
                     @if(($order->status_pesanan ?? $order->status) === 'selesai')
                       <a href="{{ route('pembeli.orders.show', $order->id) }}"
@@ -125,7 +154,7 @@
                         Lihat Detail
                       </span>
                     @endif
-                  </td>
+                  </td> -->
 
                 </tr>
               @endforeach

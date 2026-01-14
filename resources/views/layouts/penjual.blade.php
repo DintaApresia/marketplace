@@ -7,99 +7,102 @@
     @vite('resources/css/app.css')
 </head>
 
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen text-gray-800">
 
-    {{-- HEADER --}}
-    <header class="bg-white shadow fixed top-0 left-0 right-0 z-20">
-        <div class="flex items-center justify-between px-6 py-4">
+{{-- ================= HEADER ================= --}}
+<header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-20">
+    <div class="flex items-center justify-between px-6 py-4">
 
-            {{-- Branding --}}
-            <div>
-                <h1 class="text-xl font-bold text-green-700">Panel Penjual</h1>
-                <p class="text-xs text-gray-500">SecondLife Marketplace</p>
-            </div>
-
-                <div class="flex items-center gap-4 text-sm text-gray-600">
-                    <span class="font-medium">
-                            {{ auth()->user()->name }}
-                        </span>
-                    <div class="flex items-center gap-2">
-                        <img
-                            src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&background=22c55e&color=ffffff"
-                            alt="Avatar"
-                            class="w-9 h-9 rounded-full border"
-                        >
-                    </div>
-                </div>
+        {{-- Branding --}}
+        <div>
+            <h1 class="text-xl font-bold text-green-700">Panel Penjual</h1>
+            <p class="text-xs text-gray-500">SecondLife Marketplace</p>
         </div>
-    </header>
 
-    {{-- SIDEBAR --}}
-    <aside class="w-64 bg-white shadow-lg fixed top-[72px] left-0 bottom-0 z-10">
+        {{-- User --}}
+        <div class="flex items-center gap-3">
+            <span class="text-sm font-medium text-gray-700">
+                {{ auth()->user()->name }}
+            </span>
+            <img
+                src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&background=22c55e&color=ffffff"
+                alt="Avatar"
+                class="w-9 h-9 rounded-full border shadow-sm"
+            >
+        </div>
+    </div>
+</header>
 
-        <nav class="p-4 space-y-1 text-sm">
+{{-- ================= SIDEBAR ================= --}}
+<aside class="w-64 bg-white shadow-lg fixed top-[72px] left-0 bottom-0 z-10 border-r">
 
-            <a href="{{ route('penjual.dashboard') }}"
-               class="block px-3 py-2 rounded-md transition hover:bg-green-50
-               {{ request()->routeIs('penjual.dashboard')
-                    ? 'bg-green-100 text-green-700 font-semibold'
-                    : 'text-gray-700' }}">
-                Dashboard
-            </a>
+    <nav class="p-4 space-y-1 text-sm">
 
-            <a href="{{ route('penjual.profile') }}"
-               class="block px-3 py-2 rounded-md transition hover:bg-green-50
-               {{ request()->routeIs('penjual.profile')
-                    ? 'bg-green-100 text-green-700 font-semibold'
-                    : 'text-gray-700' }}">
-                Profile
-            </a>
+        @php
+            $active = 'bg-green-50 text-green-700 font-semibold border-l-4 border-green-600';
+            $normal = 'text-gray-700 hover:bg-green-50';
+        @endphp
 
-            <a href="{{ route('produk.index') }}"
-               class="block px-3 py-2 rounded-md transition hover:bg-green-50
-               {{ request()->routeIs('produk.*')
-                    ? 'bg-green-100 text-green-700 font-semibold'
-                    : 'text-gray-700' }}">
-                Produk Saya
-            </a>
+        <a href="{{ route('penjual.dashboard') }}"
+           class="flex items-center gap-3 px-3 py-2 rounded-md transition {{ request()->routeIs('penjual.dashboard') ? $active : $normal }}">
+            📊 <span>Dashboard</span>
+        </a>
 
-            <a href="{{ route('penjual.orders.masuk') }}"
-               class="block px-3 py-2 rounded-md transition hover:bg-green-50
-               {{ request()->routeIs('penjual.orders.masuk')
-                    ? 'bg-green-100 text-green-700 font-semibold'
-                    : 'text-gray-700' }}">
-                Pesanan Masuk
-            </a>
-            <a href="{{ route('penjual.laporan') }}"
-               class="block px-3 py-2 rounded-md transition hover:bg-green-50
-               {{ request()->routeIs('penjual.laporan')
-                    ? 'bg-green-100 text-green-700 font-semibold'
-                    : 'text-gray-700' }}">
-                Laporan Penjualan
-            </a>
+        <a href="{{ route('penjual.profile') }}"
+           class="flex items-center gap-3 px-3 py-2 rounded-md transition {{ request()->routeIs('penjual.profile') ? $active : $normal }}">
+            👤 <span>Profil Toko</span>
+        </a>
 
-            <form action="{{ route('logout') }}" method="POST" onsubmit="return confirm('Yakin ingin keluar?')">
-                @csrf
-                <button
-                    type="submit"
-                    class="w-full text-left px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 mt-4">
-                    Logout
-                </button>
-            </form>
-        </nav>
-    </aside>
+        <a href="{{ route('produk.index') }}"
+           class="flex items-center gap-3 px-3 py-2 rounded-md transition {{ request()->routeIs('produk.*') ? $active : $normal }}">
+            📦 <span>Produk Saya</span>
+        </a>
 
-    {{-- CONTENT --}}
-    <main class="ml-64 pt-[96px] p-6">
+        <a href="{{ route('penjual.orders.masuk') }}"
+           class="flex items-center gap-3 px-3 py-2 rounded-md transition {{ request()->routeIs('penjual.orders.masuk') ? $active : $normal }}">
+            🧾 <span>Pesanan Masuk</span>
+        </a>
 
-        {{-- Judul Halaman --}}
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">
+        <a href="{{ route('penjual.laporan') }}"
+           class="flex items-center gap-3 px-3 py-2 rounded-md transition {{ request()->routeIs('penjual.laporan') ? $active : $normal }}">
+            📈 <span>Laporan Penjualan</span>
+        </a>
+
+        {{-- Divider --}}
+        <div class="my-4 border-t"></div>
+
+        <form action="{{ route('logout') }}" method="POST" onsubmit="return confirm('Yakin ingin keluar?')">
+            @csrf
+            <button
+                type="submit"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-md text-red-600 hover:bg-red-50 transition">
+                🚪 Logout
+            </button>
+        </form>
+
+    </nav>
+</aside>
+
+{{-- ================= CONTENT ================= --}}
+<main class="ml-64 pt-[96px] p-6">
+
+    {{-- Page Title --}}
+    <div class="mb-6">
+        <h2 class="text-lg font-semibold text-gray-800">
             @yield('title')
         </h2>
+        <p class="text-sm text-gray-500">
+            Kelola toko dan penjualan Anda
+        </p>
+    </div>
 
-        {{-- Isi --}}
+    {{-- Page Content --}}
+    <div class="bg-white rounded-xl shadow-sm p-6">
         @yield('content')
-    </main>
+    </div>
+
+</main>
+
 @stack('scripts')
 </body>
 </html>

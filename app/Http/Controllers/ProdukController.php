@@ -33,34 +33,25 @@ class ProdukController extends Controller
      */
     public function store(Request $request)
     {
-        $user = $request->user();
-
         $data = $request->validate([
             'nama_barang' => 'required|string|max:255',
             'deskripsi'   => 'required|string',
             'harga'       => 'required|numeric|min:0',
-            'stok'        => 'required|integer|min:0', // ✅ boleh 0
+            'stok'        => 'required|integer|min:0',
             'gambar'      => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // set pemilik produk
-        $data['user_id'] = $user->id;
+        $data['user_id'] = auth()->id();
 
-        // ✅ full otomatis: stok 0 => nonaktif, stok > 0 => aktif
-        $data['is_active'] = ((int) $data['stok'] > 0);
-
-        // upload gambar kalau ada
         if ($request->hasFile('gambar')) {
             $data['gambar'] = $request->file('gambar')->store('produk', 'public');
         }
 
-        Produk::create($data);
+        Produk::create($data); // 🔥 model handle is_active
 
-        return redirect()
-            ->route('produk.index')
+        return redirect()->route('produk.index')
             ->with('success', 'Produk berhasil ditambahkan.');
     }
-
 
     /**
      * Form edit produk (nanti).
@@ -87,50 +78,32 @@ class ProdukController extends Controller
             'gambar'      => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // ✅ full otomatis: stok 0 => nonaktif, stok > 0 => aktif
-        $data['is_active'] = ((int) $data['stok'] > 0);
-
-        // kalau upload gambar baru
         if ($request->hasFile('gambar')) {
-            // hapus gambar lama
-            if ($produk->gambar && Storage::disk('public')->exists($produk->gambar)) {
+            if ($produk->gambar) {
                 Storage::disk('public')->delete($produk->gambar);
             }
-
-            // simpan gambar baru
             $data['gambar'] = $request->file('gambar')->store('produk', 'public');
         }
 
-        $produk->update($data);
+        $produk->update($data); // 🔥 model handle is_active
 
-        return redirect()
-            ->route('produk.index')
-            ->with('success', 'Produk berhasil diperbarui.');
+        return back()->with('success', 'Produk berhasil diperbarui.');
     }
 
     public function tambahStok(Request $request, Produk $produk)
     {
-        // pastikan produk milik user login
         $this->authorizeOwner($produk);
 
-        // default tambah 1, bisa dikirim dari button
-        $jumlah = (int) ($request->input('jumlah', 1));
-
+        $jumlah = (int) $request->input('jumlah', 1);
         if ($jumlah < 1) {
             return back()->with('error', 'Jumlah stok tidak valid.');
         }
 
         $produk->stok += $jumlah;
-
-        // stok-based active
-        $produk->is_active = $produk->stok > 0;
-
-        $produk->save();
+        $produk->save(); // 🔥 model handle is_active
 
         return back()->with('success', 'Stok berhasil ditambahkan.');
     }
-
-
 
     /**
      * Hapus produk (nanti diselesaikan).

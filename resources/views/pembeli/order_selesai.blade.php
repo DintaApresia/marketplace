@@ -196,7 +196,7 @@
   </div>
 
   <div class="flex justify-end gap-2">
-    <a href="{{ url('/pembeli/dashboard') }}"
+    <a href="{{ url('/pembeli/orders') }}"
        class="px-4 py-2 rounded-xl border text-sm hover:bg-gray-50">
       Kembali
     </a>

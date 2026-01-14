@@ -27,6 +27,24 @@ class Produk extends Model
         'is_active' => 'boolean',
     ];
 
+    protected static function boot()
+    {
+        parent :: boot();
+        
+        static::saving(function ($product) {
+
+            // 🔴 Jika stok 0 → otomatis nonaktif
+            if ($product->stok <= 0) {
+                $product->is_active = 0;
+            }
+
+            // 🟢 (opsional) Jika stok > 0 → aktif kembali
+            if ($product->stok > 0 && $product->is_active === null) {
+                $product->is_active = 1;
+            }
+        });
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
