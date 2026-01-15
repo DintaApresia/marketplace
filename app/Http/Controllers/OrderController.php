@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Keranjang;
 use App\Models\ProdukRating;
+use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
@@ -294,77 +295,120 @@ class OrderController extends Controller
      */
     public function storeRating(Request $request, Order $order)
     {
-        // 1) security: order harus milik user
-        if ($order->user_id !== Auth::id()) {
-            abort(403);
-        }
+        if ($order->user_id !== Auth::id()) abort(403);
 
-        // 2) hanya boleh rating jika order selesai
         $status = $order->status_pesanan ?? $order->status ?? '';
         if ($status !== 'selesai') {
-            return back()->with('error', 'Rating hanya bisa diberikan jika pesanan sudah selesai.');
+            return back()->with('error', 'Rating hanya bisa diberikan jika pesanan selesai.');
         }
 
-        // 3) validasi input
         $validated = $request->validate([
             'produk_id' => 'required|integer',
             'rating'    => 'required|integer|min:1|max:5',
             'review'    => 'nullable|string|max:2000',
-
-            // multi image
-            'review_images'   => 'nullable',
             'review_images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        // ==========
-        // KODE DI BAWAH INI TIDAK AKAN JALAN selama dd() masih ada.
-        // Hapus dd() untuk lanjut simpan rating.
-        // ==========
-
         $produkId = (int) $validated['produk_id'];
 
-        $exists = $order->items()->where('produk_id', $produkId)->exists();
-        if (!$exists) {
-            return back()->with('error', 'Produk tidak ditemukan di pesanan ini.');
+        // pastikan produk ada di order
+        if (!$order->items()->where('produk_id', $produkId)->exists()) {
+            return back()->with('error', 'Produk tidak ditemukan.');
         }
 
-        $ratingRow = ProdukRating::where('user_id', Auth::id())
-            ->where('order_id', $order->id)
-            ->where('produk_id', $produkId)
-            ->first();
+        // CEGAH DUPLIKAT REVIEW
+        $already = ProdukRating::where([
+            'user_id'   => Auth::id(),
+            'order_id'  => $order->id,
+            'produk_id' => $produkId,
+        ])->exists();
 
-        $oldImages = $ratingRow?->review_images ?? [];
-        if (!is_array($oldImages)) {
-            $oldImages = json_decode($oldImages, true) ?: [];
+        if ($already) {
+            return back()->with('error', 'Review sudah ada. Silakan edit review.');
         }
 
-        $newImages = [];
-        $files = $request->file('review_images');
-        if ($files) {
-            $files = is_array($files) ? $files : [$files];
-            foreach ($files as $img) {
-                if ($img && $img->isValid()) {
-                    $newImages[] = $img->store('review_images', 'public');
+        // upload gambar
+        $images = [];
+        if ($request->hasFile('review_images')) {
+            foreach ($request->file('review_images') as $img) {
+                if ($img->isValid()) {
+                    $images[] = $img->store('review_images', 'public');
                 }
             }
         }
 
-        $mergedImages = array_values(array_unique(array_merge($oldImages, $newImages)));
+        ProdukRating::create([
+            'user_id'       => Auth::id(),
+            'order_id'      => $order->id,
+            'produk_id'     => $produkId,
+            'rating'        => (int) $validated['rating'],
+            'review'        => $validated['review'] ?? null,
+            'review_images' => !empty($images) ? $images : null,
+        ]);
 
-        ProdukRating::updateOrCreate(
-            [
-                'user_id'   => Auth::id(),
-                'order_id'  => $order->id,
-                'produk_id' => $produkId,
-            ],
-            [
-                'rating'        => (int) $validated['rating'],
-                'review'        => $validated['review'] ?? null,
-                'review_images' => !empty($mergedImages) ? $mergedImages : null,
-            ]
-        );
+        return back()->with('success', 'Review berhasil dikirim.');
+    }
 
-        return back()->with('success', 'Review berhasil disimpan.');
+    /* ============================
+     | UPDATE – EDIT REVIEW SAJA
+     ============================ */
+    public function updateRating(Request $request, Order $order)
+    {
+        if ($order->user_id !== Auth::id()) abort(403);
+
+        $status = $order->status_pesanan ?? $order->status ?? '';
+        if ($status !== 'selesai') {
+            return back()->with('error', 'Review hanya bisa diubah jika pesanan selesai.');
+        }
+
+        $validated = $request->validate([
+            'produk_id' => 'required|integer',
+            'rating'    => 'required|integer|min:1|max:5',
+            'review'    => 'nullable|string|max:2000',
+            'review_images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+            'delete_images'   => 'nullable|array',
+            'delete_images.*' => 'string',
+        ]);
+
+        $produkId = (int) $validated['produk_id'];
+
+        $rating = ProdukRating::where([
+            'user_id'   => Auth::id(),
+            'order_id'  => $order->id,
+            'produk_id' => $produkId,
+        ])->firstOrFail();
+
+        $images = $rating->review_images ?? [];
+        if (!is_array($images)) {
+            $images = json_decode($images, true) ?: [];
+        }
+
+        // hapus gambar lama
+        if ($request->filled('delete_images')) {
+            foreach ($request->delete_images as $img) {
+                if (in_array($img, $images)) {
+                    Storage::disk('public')->delete($img);
+                }
+            }
+            $images = array_values(array_diff($images, $request->delete_images));
+        }
+
+        // upload gambar baru
+        if ($request->hasFile('review_images')) {
+            foreach ($request->file('review_images') as $img) {
+                if ($img->isValid()) {
+                    $images[] = $img->store('review_images', 'public');
+                }
+            }
+        }
+
+        $rating->update([
+            'rating'        => (int) $validated['rating'],
+            'review'        => $validated['review'] ?? null,
+            'review_images' => !empty($images) ? array_values(array_unique($images)) : null,
+        ]);
+
+        return back()->with('success', 'Review berhasil diperbarui.');
     }
 
 

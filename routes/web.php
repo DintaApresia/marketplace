@@ -114,6 +114,7 @@ Route::middleware(['auth', 'role:pembeli'])
     // Detail order (HANYA setelah selesai)
         // Route::get('/orders/{order}',[OrderController::class, 'show'])->name('orders.show');
         Route::post('/orders/{order}/rating', [OrderController::class, 'storeRating'])->name('orders.rating.store');
+        Route::put('/orders/{order}/rating',[OrderController::class, 'updateRating'])->name('orders.rating.update');
         // Hasil pencarian
         // Route::get('/hasilpencarian', [PencarianController::class, 'produk'])->name('hasilpencarian');
         Route::get('/search', [PencarianController::class, 'searchNearby'])->name('search');

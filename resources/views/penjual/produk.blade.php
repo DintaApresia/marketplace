@@ -108,7 +108,7 @@
                                         <button type="submit"
                                             class="px-2 py-1 text-xs bg-green-600 text-white rounded
                                                 hover:bg-green-700">
-                                            + Stok
+                                            + 1 Stok
                                         </button>
                                     </form>
 

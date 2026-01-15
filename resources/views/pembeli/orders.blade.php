@@ -1,9 +1,22 @@
-@extends('layouts.pembeli')
-@section('title', 'Riwayat Pesanan')
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Riwayat Pesanan</title>
 
-@section('content')
+  {{-- Tailwind --}}
+  @vite('resources/css/app.css')
+</head>
+<body class="bg-gray-100">
+
 <div class="max-w-6xl mx-auto py-8 px-4">
   <h1 class="text-2xl font-bold mb-6 text-gray-800">Riwayat Pesanan Saya</h1>
+
+  <a href="{{ route('pembeli.profile') }}"
+     class="inline-block mt-4 text-xs sm:text-sm text-gray-500 hover:text-gray-700">
+    ← Kembali ke halaman profil
+  </a>
 
   @if($orders->count() === 0)
     <div class="bg-white rounded-lg shadow p-6 text-center text-gray-600">
@@ -169,9 +182,6 @@
     </div>
   @endif
 
-  <a href="{{ route('pembeli.profile') }}"
-     class="inline-block mt-4 text-xs sm:text-sm text-gray-500 hover:text-gray-700">
-    ← Kembali ke halaman profil
-  </a>
 </div>
-@endsection
+</body>
+</html>

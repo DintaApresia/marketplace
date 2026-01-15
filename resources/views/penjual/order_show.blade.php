@@ -8,25 +8,38 @@
     Detail Pesanan #{{ $order->kode_order ?? ('ORD-'.$order->id) }}
   </h1>
 
-  {{-- INFO PEMBELI + ALAMAT --}}
-  <div class="bg-white rounded-lg shadow p-5 mb-3 space-y-3">
-    <div>
-      <div class="text-sm text-gray-600">Pembeli</div>
-      <div class="font-semibold text-gray-800">
-        {{ $order->user->name ?? 'Pembeli' }}
-      </div>
-      <div class="text-xs text-gray-500">
-        {{ $order->user->email ?? '' }}
-      </div>
+{{-- INFO PEMBELI + ALAMAT --}}
+<div class="bg-white rounded-lg shadow p-5 mb-3 space-y-3">
+  <div>
+    <div class="text-sm text-gray-600">Pembeli</div>
+    <div class="font-semibold text-gray-800">
+      {{ $order->user->name ?? 'Pembeli' }}
     </div>
+    <div class="text-xs text-gray-500">
+      {{ $order->user->email ?? '' }}
+    </div>
+  </div>
 
-    <div class="pt-3 border-t">
+  <div class="pt-3 border-t space-y-2">
+    <div>
       <div class="text-sm text-gray-600">Alamat Pengiriman</div>
       <div class="text-sm text-gray-800 leading-relaxed">
         {{ $order->alamat_pengiriman ?? '-' }}
       </div>
     </div>
+
+    {{-- TANGGAL SELESAI --}}
+    <div>
+      <div class="text-sm text-gray-600">Tanggal Selesai</div>
+      <div class="text-sm text-gray-800">
+        {{ $order->updated_at
+            ? \Carbon\Carbon::parse($order->updated_at)->format('d M Y H:i')
+            : '-' }}
+      </div>
+    </div>
   </div>
+</div>
+
 
   @php
     // helper URL gambar review (support storage path / full url)
