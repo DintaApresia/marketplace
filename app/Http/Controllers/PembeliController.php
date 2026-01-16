@@ -25,28 +25,18 @@ class PembeliController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
+            'name'          => 'required|string|max:255',
             'receiver_name' => 'required|string|max:100',
             'phone'         => 'required|string|max:25',
-
-            // // password opsional: kalau diisi wajib konfirmasi & minimal 8
-            // 'password' => 'nullable|string|min:8|confirmed',
         ]);
 
-        // // ✅ Update USER (email & password) kalau diisi
-        // if (!empty($validated['email'])) {
-        //     $user->email = $validated['email'];
-        // }
+        // ✅ Update NAMA USER
+        if ($user->name !== $validated['name']) {
+            $user->name = $validated['name'];
+            $user->save();
+        }
 
-        // if (!empty($validated['password'])) {
-        //     $user->password = Hash::make($validated['password']);
-        // }
-
-        // // simpan perubahan user hanya jika ada yang berubah
-        // if ($user->isDirty(['email', 'password'])) {
-        //     $user->save();
-        // }
-
-        // ✅ Update/insert PEMBELI
+        // ✅ Update / insert PEMBELI
         $pembeli = Pembeli::firstOrNew(['idUser' => $user->id]);
         $pembeli->nama_pembeli = $validated['receiver_name'];
         $pembeli->no_telp      = $validated['phone'];

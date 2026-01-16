@@ -33,3 +33,8 @@
     background-color: var(--color-secondary);
     color: #14532d;
 }
+
+/* CEGAH HEADER LONCAT KARENA SCROLLBAR */
+html {
+  scrollbar-gutter: stable;
+}

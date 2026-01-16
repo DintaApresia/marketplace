@@ -162,7 +162,7 @@
     {{-- Tombol Simpan --}}
     <div class="flex items-center justify-end">
       <button class="rounded-md bg-green-700 text-white px-4 py-2 hover:bg-green-800">
-        Simpan Pengaturan
+        Simpan Profile
       </button>
     </div>
   </form>

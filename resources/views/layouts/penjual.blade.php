@@ -7,21 +7,34 @@
     @vite('resources/css/app.css')
 </head>
 
-<body class="bg-gray-100 min-h-screen text-gray-800">
+<body class="bg-gray-100 min-h-screen text-gray-800 overflow-x-hidden">
 
 {{-- ================= HEADER ================= --}}
-<header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-20">
-    <div class="flex items-center justify-between px-6 py-4">
+<header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-40 w-full">
+    <div class="flex items-center justify-between px-4 md:px-6 py-4">
 
-        {{-- Branding --}}
-        <div>
-            <h1 class="text-xl font-bold text-green-700">Panel Penjual</h1>
-            <p class="text-xs text-gray-500">SecondLife Marketplace</p>
+        {{-- Left --}}
+        <div class="flex items-center gap-3">
+            {{-- Hamburger (mobile only) --}}
+            <button
+                onclick="toggleSidebar()"
+                class="md:hidden text-2xl text-gray-700 focus:outline-none">
+                ☰
+            </button>
+
+            <div>
+                <h1 class="text-lg md:text-xl font-bold text-green-700">
+                    Panel Penjual
+                </h1>
+                <p class="hidden md:block text-xs text-gray-500">
+                    SecondLife Marketplace
+                </p>
+            </div>
         </div>
 
         {{-- User --}}
         <div class="flex items-center gap-3">
-            <span class="text-sm font-medium text-gray-700">
+            <span class="hidden sm:block text-sm font-medium text-gray-700">
                 {{ auth()->user()->name }}
             </span>
             <img
@@ -30,11 +43,22 @@
                 class="w-9 h-9 rounded-full border shadow-sm"
             >
         </div>
+
     </div>
 </header>
 
+{{-- ================= WRAPPER (PENTING) ================= --}}
+<div class="flex pt-[72px]">
+
 {{-- ================= SIDEBAR ================= --}}
-<aside class="w-64 bg-white shadow-lg fixed top-[72px] left-0 bottom-0 z-10 border-r">
+<aside
+  id="sidebar"
+  class="fixed md:sticky md:top-[72px] left-0
+         h-[calc(100vh-72px)] md:h-[calc(100vh-72px)]
+         w-64 bg-white shadow-lg border-r
+         transform -translate-x-full md:translate-x-0
+         transition-transform duration-300
+         z-30 overflow-y-auto">
 
     <nav class="p-4 space-y-1 text-sm">
 
@@ -71,11 +95,13 @@
         {{-- Divider --}}
         <div class="my-4 border-t"></div>
 
-        <form action="{{ route('logout') }}" method="POST" onsubmit="return confirm('Yakin ingin keluar?')">
+        <form action="{{ route('logout') }}" method="POST"
+              onsubmit="return confirm('Yakin ingin keluar?')">
             @csrf
             <button
                 type="submit"
-                class="w-full flex items-center gap-3 px-3 py-2 rounded-md text-red-600 hover:bg-red-50 transition">
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-md
+                       text-red-600 hover:bg-red-50 transition">
                 🚪 Logout
             </button>
         </form>
@@ -83,8 +109,8 @@
     </nav>
 </aside>
 
-{{-- ================= CONTENT ================= --}}
-<main class="ml-64 pt-[96px] p-6">
+{{-- ================= MAIN CONTENT ================= --}}
+<main class="flex-1 p-4 md:p-6 bg-gray-100 overflow-x-hidden">
 
     {{-- Page Title --}}
     <div class="mb-6">
@@ -97,11 +123,21 @@
     </div>
 
     {{-- Page Content --}}
-    <div class="bg-white rounded-xl shadow-sm p-6">
+    <div class="bg-white rounded-xl shadow-sm p-4 md:p-6">
         @yield('content')
     </div>
 
 </main>
+
+</div>
+
+{{-- ================= SCRIPT ================= --}}
+<script>
+function toggleSidebar() {
+    document.getElementById('sidebar')
+        .classList.toggle('-translate-x-full');
+}
+</script>
 
 @stack('scripts')
 </body>

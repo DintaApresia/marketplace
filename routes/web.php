@@ -111,7 +111,6 @@ Route::middleware(['auth', 'role:pembeli'])
         // Aksi terima barang (tanpa lihat detail)
         Route::patch('/orders/{order}/selesai',[OrderController::class, 'selesai'])->name('orders.selesai');
 
-    // Detail order (HANYA setelah selesai)
         // Route::get('/orders/{order}',[OrderController::class, 'show'])->name('orders.show');
         Route::post('/orders/{order}/rating', [OrderController::class, 'storeRating'])->name('orders.rating.store');
         Route::put('/orders/{order}/rating',[OrderController::class, 'updateRating'])->name('orders.rating.update');

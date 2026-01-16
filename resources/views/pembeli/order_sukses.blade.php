@@ -35,6 +35,13 @@
             </div>
 
             <div class="flex justify-between">
+                <span class="text-gray-500">Tanggal Pembelian</span>
+                <span class="font-semibold">
+                    {{ $order->created_at->translatedFormat('d F Y, H:i') }}
+                </span>
+            </div>
+
+            <div class="flex justify-between">
                 <span class="text-gray-500">Metode Pembayaran</span>
                 <span class="font-semibold uppercase">
                     {{ $order->metode_pembayaran }}
@@ -55,6 +62,7 @@
                 </span>
             </div>
         </div>
+
 
         {{-- INFO TAMBAHAN --}}
         @if($order->metode_pembayaran === 'transfer')

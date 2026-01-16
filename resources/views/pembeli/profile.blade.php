@@ -40,19 +40,32 @@
             @csrf
 
             {{-- Email --}}
-            <div class="sm:col-span-2">
+            <div>
                 <label class="text-sm font-medium text-gray-700">Email</label>
                 <input type="email"
                     name="email"
                     value="{{ old('email', $user->email) }}"
                     readonly
-                    class="mt-1 w-full border rounded-md px-3 py-2 text-sm focus:ring-green-600 focus:border-green-600 @error('email') border-red-500 @enderror"
-                    placeholder="email@contoh.com">
+                    class="mt-1 w-full border rounded-md px-3 py-2 text-sm
+                        bg-gray-100 cursor-not-allowed
+                        focus:ring-green-600 focus:border-green-600">
+            </div>
 
-                @error('email')
+            {{-- Nama User --}}
+            <div>
+                <label class="text-sm font-medium text-gray-700">Nama User</label>
+                <input name="name"
+                    value="{{ old('name', $user->name) }}"
+                    class="mt-1 w-full border rounded-md px-3 py-2 text-sm
+                        focus:ring-green-600 focus:border-green-600
+                        @error('name') border-red-500 @enderror"
+                    placeholder="Nama user">
+
+                @error('name')
                     <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                 @enderror
             </div>
+
 
             {{-- Nama --}}
             <div>

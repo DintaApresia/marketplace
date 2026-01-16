@@ -123,53 +123,39 @@ class OrderController extends Controller
             'metode_pembayaran' => ['required','in:cod,transfer'],
             'bukti_pembayaran' => [
                 'required_if:metode_pembayaran,transfer',
-                'image',
-                'mimes:jpg,jpeg,png,webp',
-                'max:2048',
+                'image','mimes:jpg,jpeg,png,webp','max:2048',
             ],
         ]);
 
         $pembeli = Pembeli::where('idUser', Auth::id())->first();
         if (!$pembeli || !$pembeli->nama_pembeli || !$pembeli->no_telp || !$pembeli->alamat) {
-            return back()->with('error', 'Lengkapi data pembeli (nama, no HP, alamat) dulu.');
+            return back()->with('error', 'Lengkapi data pembeli dulu.');
         }
 
-        // Ambil keranjang dari DB
         $items = Keranjang::with('produk')
             ->where('id_user', Auth::id())
             ->get();
 
         if ($items->isEmpty()) {
-            return redirect()->route('pembeli.keranjang.index')->with('error', 'Keranjang kosong.');
+            return redirect()->route('pembeli.keranjang')->with('error', 'Keranjang kosong.');
         }
 
-        return DB::transaction(function () use ($items, $pembeli, $request) {
+        /** 🔽 INI PENTING */
+        $order = DB::transaction(function () use ($items, $pembeli, $request) {
 
-            // Ambil penjual dari produk pertama (untuk rekening + ongkir)
             $firstProduk = $items->first()->produk;
             $produkFirst = Produk::with('penjual')->lockForUpdate()->findOrFail($firstProduk->id);
             $penjual = $produkFirst->penjual;
 
-            // Hitung subtotal + cek stok (lock produk biar aman)
             $subtotal = 0;
-
             foreach ($items as $k) {
                 $p = Produk::lockForUpdate()->find($k->produk->id);
-                if (!$p) continue;
-
-                $qty = (int) $k->jumlah;
-                if ($qty < 1) {
-                    return back()->with('error', 'Jumlah barang tidak valid.');
+                if ((int)$p->stok < (int)$k->jumlah) {
+                    throw new \Exception("Stok {$p->nama_barang} tidak cukup");
                 }
-
-                if ((int)$p->stok < $qty) {
-                    return back()->with('error', "Stok {$p->nama_barang} tidak cukup. Sisa: {$p->stok}");
-                }
-
-                $subtotal += ((float)$p->harga) * $qty;
+                $subtotal += ((float)$p->harga) * (int)$k->jumlah;
             }
 
-            // Ongkir dari penjual ↔ pembeli
             $ongkir = $this->hitungOngkir(
                 $penjual->latitude ?? null,
                 $penjual->longitude ?? null,
@@ -179,57 +165,56 @@ class OrderController extends Controller
 
             $total = $subtotal + $ongkir;
 
-            // Simpan bukti pembayaran (kalau transfer)
             $buktiPath = null;
             if ($request->metode_pembayaran === 'transfer' && $request->hasFile('bukti_pembayaran')) {
-                $buktiPath = $request->file('bukti_pembayaran')->store('bukti_pembayaran', 'public');
+                $buktiPath = $request->file('bukti_pembayaran')
+                    ->store('bukti_pembayaran', 'public');
             }
 
-            // Buat order
             $order = Order::create([
                 'user_id'           => Auth::id(),
                 'nama_penerima'     => $pembeli->nama_pembeli,
                 'no_hp'             => $pembeli->no_telp,
                 'alamat_pengiriman' => $pembeli->alamat,
-
                 'subtotal'          => $subtotal,
                 'ongkir'            => $ongkir,
                 'total_bayar'       => $total,
-
                 'status_pesanan'    => 'menunggu',
                 'metode_pembayaran' => $request->metode_pembayaran,
-                'status_pembayaran' => $request->metode_pembayaran === 'transfer' ? 'menunggu_verifikasi' : 'belum_bayar',
+                'status_pembayaran' => $request->metode_pembayaran === 'transfer'
+                                        ? 'menunggu_verifikasi'
+                                        : 'belum_bayar',
                 'bukti_pembayaran'  => $buktiPath,
                 'catatan'           => $request->catatan,
             ]);
 
-            // Buat order_items + kurangi stok
             foreach ($items as $k) {
                 $p = Produk::lockForUpdate()->find($k->produk->id);
-                if (!$p) continue;
-
-                $qty = (int) $k->jumlah;
 
                 OrderItem::create([
                     'order_id'      => $order->id,
                     'produk_id'     => $p->id,
                     'nama_barang'   => $p->nama_barang,
                     'harga_satuan'  => $p->harga,
-                    'jumlah'        => $qty,
-                    'subtotal_item' => ((float)$p->harga) * $qty,
+                    'jumlah'        => $k->jumlah,
+                    'subtotal_item' => ((float)$p->harga) * (int)$k->jumlah,
                 ]);
 
-                $p->stok = (int)$p->stok - $qty;
+                $p->stok -= (int)$k->jumlah;
                 $p->save();
             }
 
-            // Hapus keranjang user (karena sudah jadi order)
             Keranjang::where('id_user', Auth::id())->delete();
 
-            return redirect()->route('pembeli.orders.sukses', $order->id)
-                ->with('success', 'Pesanan berhasil dibuat.');
+            return $order; // ⬅️ RETURN DATA, BUKAN REDIRECT
         });
+
+        // ✅ REDIRECT DI LUAR TRANSACTION
+        return redirect()
+            ->route('pembeli.orders.sukses', $order->id)
+            ->with('success', 'Pesanan berhasil dibuat.');
     }
+
     /**
      * GET /order/{orderId}/sukses
      * (opsional)

@@ -63,7 +63,9 @@
           <article class="group rounded-xl overflow-hidden border border-gray-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
 
             {{-- Gambar --}}
-            <a href="{{ route('pembeli.produk.detail', $p->id . $qs) }}">
+            <a href="{{ route('pembeli.produk.detail', [
+            'id' => $p->id,
+            'back' => url()->full()]) }}">
               <div class="relative aspect-[4/3] sm:aspect-[16/11] bg-gray-100 overflow-hidden">
                 @if($p->gambar)
                   <img
@@ -90,7 +92,10 @@
             {{-- Konten --}}
             <div class="p-3">
               <a
-                href="{{ route('pembeli.produk.detail', $p->id . $qs) }}"
+                href="{{ route('pembeli.produk.detail', [
+                    'id' => $p->id,
+                    'back' => url()->full()
+                ]) }}"
                 class="block text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-green-700"
               >
                 {{ $p->nama_barang }}

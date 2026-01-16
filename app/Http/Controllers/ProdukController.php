@@ -110,14 +110,26 @@ class ProdukController extends Controller
      */
     public function destroy(Produk $produk)
     {
+        // Proteksi kepemilikan
         if ($produk->user_id !== auth()->id()) {
             abort(403);
         }
 
+        // Jika produk sudah pernah dipesan → NONAKTIFKAN + STOK = 0
         if ($produk->orderItems()->exists()) {
-            return back()->with('error', 'Produk tidak bisa dihapus karena sudah pernah dibeli.');
+
+            $produk->update([
+                'is_active' => 0,
+                'stok'      => 0
+            ]);
+
+            return back()->with(
+                'error',
+                'Produk sudah pernah dipesan, tidak dapat dihapus. Produk telah dinonaktifkan dan stok diatur menjadi 0.'
+            );
         }
 
+        // Jika belum pernah dipesan → hapus permanen
         if ($produk->gambar && Storage::disk('public')->exists($produk->gambar)) {
             Storage::disk('public')->delete($produk->gambar);
         }
@@ -126,7 +138,6 @@ class ProdukController extends Controller
 
         return back()->with('success', 'Produk berhasil dihapus.');
     }
-
 
 
     /**
