@@ -2,14 +2,23 @@
   <!-- Card landscape: image kiri, form kanan (match login) -->
   <div class="w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
     <div class="grid md:grid-cols-5">
-      {{-- KIRI: gambar --}}
-      <div class="relative md:col-span-2 h-40 md:h-auto">
+      {{-- KIRI / ATAS: GAMBAR KARTUN --}}
+      <div
+        class="relative md:col-span-2
+               h-56 md:h-auto
+               bg-green-50
+               flex items-center justify-center"
+      >
         <img
-          src="{{ asset('images/auth-side.jpg') }}"
-          onerror="this.src='https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=1200&auto=format&fit=crop'"
-          alt="Secondlife"
-          class="absolute inset-0 h-full w-full object-cover"
-        />
+          src="{{ asset('images/login-shopping-cart.png') }}"
+          alt="Shopping illustration"
+          class="
+            w-full h-full
+            object-contain
+            p-6
+            md:p-8
+          "
+        >
       </div>
 
       {{-- KANAN: form register --}}

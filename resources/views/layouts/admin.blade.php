@@ -48,7 +48,7 @@
         <a href="{{ route('admin.toko.show') }}"
            class="flex items-center gap-3 px-4 py-2 rounded-lg transition
            {{ request()->routeIs('admin.toko.show') ? $active : $normal }}">
-            📦 <span>Produk Penjual</span>
+            📦 <span>Daftar Penjual</span>
         </a>
     </nav>
 
@@ -101,7 +101,7 @@
             <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 rounded hover:bg-gray-700">Dashboard</a>
             <a href="{{ route('admin.user') }}" class="block px-4 py-2 rounded hover:bg-gray-700">Kelola User</a>
             <a href="{{ route('admin.penjual') }}" class="block px-4 py-2 rounded hover:bg-gray-700">Verifikasi Penjual</a>
-            <a href="{{ route('admin.toko.show') }}" class="block px-4 py-2 rounded hover:bg-gray-700">Produk Penjual</a>
+            <a href="{{ route('admin.toko.show') }}" class="block px-4 py-2 rounded hover:bg-gray-700">Daftar Penjual</a>
         </nav>
 
         <div class="mt-6 pt-4 border-t border-gray-700">
