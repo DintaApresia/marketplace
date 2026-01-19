@@ -62,31 +62,79 @@
       {{-- SPACER KANAN --}}
       <div class="flex-[1]"></div>
 
-      {{-- MENU --}}
-      <nav class="flex items-center gap-6 text-sm shrink-0">
+      {{-- Menu --}}
+      @php
+        $cartCount = auth()->check()
+            ? \App\Models\Keranjang::where('id_user', auth()->id())->sum('jumlah')
+            : 0;
+      @endphp
+
+      <nav class="flex items-center gap-7 shrink-0">
+
+        {{-- HOME --}}
         <a href="{{ route('pembeli.dashboard') }}"
-           class="{{ request()->routeIs('pembeli.dashboard')
-              ? 'text-green-700 font-semibold border-b-2 border-green-700 pb-1'
+          class="flex flex-col items-center gap-0.5 leading-none
+          {{ request()->routeIs('pembeli.dashboard')
+              ? 'text-green-700 font-semibold'
               : 'text-gray-700 hover:text-green-700' }}">
-          Home
+
+          <i class="bi bi-house text-[16px] leading-none"></i>
+          <span class="text-[11px] mt-[1px]">Home</span>
+
+          @if(request()->routeIs('pembeli.dashboard'))
+            <span class="w-5 h-0.5 bg-green-700 rounded-full mt-1"></span>
+          @endif
         </a>
 
+        {{-- KERANJANG --}}
         <a href="{{ route('pembeli.keranjang') }}"
-           data-login-required
-           class="{{ request()->routeIs('pembeli.keranjang')
-              ? 'text-green-700 font-semibold border-b-2 border-green-700 pb-1'
+          data-login-required
+          class="relative flex flex-col items-center gap-0.5 leading-none
+          {{ request()->routeIs('pembeli.keranjang')
+              ? 'text-green-700 font-semibold'
               : 'text-gray-700 hover:text-green-700' }}">
-          Keranjang
+
+          <div class="relative">
+            <i class="bi bi-cart text-[16px] leading-none"></i>
+
+            {{-- BADGE --}}
+            @if($cartCount > 0)
+              <span
+                class="absolute -top-1.5 -right-2
+                      bg-red-500 text-white text-[9px]
+                      min-w-[14px] h-[14px] px-0.5
+                      rounded-full flex items-center justify-center">
+                {{ $cartCount }}
+              </span>
+            @endif
+          </div>
+
+          <span class="text-[11px] mt-[1px]">Keranjang</span>
+
+          @if(request()->routeIs('pembeli.keranjang'))
+            <span class="w-5 h-0.5 bg-green-700 rounded-full mt-1"></span>
+          @endif
         </a>
 
+        {{-- PROFILE --}}
         <a href="{{ route('pembeli.profile') }}"
-           data-login-required
-           class="{{ request()->routeIs('pembeli.profile')
-              ? 'text-green-700 font-semibold border-b-2 border-green-700 pb-1'
+          data-login-required
+          class="flex flex-col items-center gap-0.5 leading-none
+          {{ request()->routeIs('pembeli.profile')
+              ? 'text-green-700 font-semibold'
               : 'text-gray-700 hover:text-green-700' }}">
-          Profile
+
+          <i class="bi bi-person text-[16px] leading-none"></i>
+          <span class="text-[11px] mt-[1px]">Profile</span>
+
+          @if(request()->routeIs('pembeli.profile'))
+            <span class="w-5 h-0.5 bg-green-700 rounded-full mt-1"></span>
+          @endif
         </a>
+
       </nav>
+
+
 
       {{-- AVATAR --}}
       @auth
@@ -126,29 +174,81 @@
   </div>
 
   {{-- MOBILE MENU --}}
+  @php
+    $cartCount = auth()->check()
+        ? \App\Models\Keranjang::where('id_user', auth()->id())->sum('jumlah')
+        : 0;
+  @endphp
+
   <div x-show="open" x-transition @click.outside="open=false"
-       class="md:hidden border-t bg-white">
-    <div class="px-4 py-4 space-y-3 text-sm">
-      <a href="{{ route('pembeli.dashboard') }}" class="block">Home</a>
-      <a href="{{ route('pembeli.keranjang') }}" class="block">Keranjang</a>
-      <a href="{{ route('pembeli.profile') }}" class="block">Profile</a>
+      class="md:hidden border-t bg-white">
+    <div class="px-4 py-4 space-y-2 text-sm">
+
+      {{-- HOME --}}
+      <a href="{{ route('pembeli.dashboard') }}"
+        class="flex items-center gap-3 px-3 py-2 rounded-md
+        {{ request()->routeIs('pembeli.dashboard')
+              ? 'bg-green-50 text-green-700 font-semibold'
+              : 'text-gray-700 hover:bg-gray-100' }}">
+        <i class="bi bi-house text-lg"></i>
+        <span>Home</span>
+      </a>
+
+      {{-- KERANJANG --}}
+      <a href="{{ route('pembeli.keranjang') }}"
+        data-login-required
+        class="flex items-center justify-between px-3 py-2 rounded-md
+        {{ request()->routeIs('pembeli.keranjang')
+              ? 'bg-green-50 text-green-700 font-semibold'
+              : 'text-gray-700 hover:bg-gray-100' }}">
+
+        <div class="flex items-center gap-3">
+          <i class="bi bi-cart text-lg"></i>
+          <span>Keranjang</span>
+        </div>
+
+        {{-- BADGE --}}
+        @if($cartCount > 0)
+          <span
+            class="bg-red-500 text-white text-[11px]
+                  min-w-[18px] h-[18px] px-1
+                  rounded-full flex items-center justify-center">
+            {{ $cartCount }}
+          </span>
+        @endif
+      </a>
+
+      {{-- PROFILE --}}
+      <a href="{{ route('pembeli.profile') }}"
+        data-login-required
+        class="flex items-center gap-3 px-3 py-2 rounded-md
+        {{ request()->routeIs('pembeli.profile')
+              ? 'bg-green-50 text-green-700 font-semibold'
+              : 'text-gray-700 hover:bg-gray-100' }}">
+        <i class="bi bi-person text-lg"></i>
+        <span>Profile</span>
+      </a>
 
       {{-- SEARCH MOBILE --}}
       @if (request()->routeIs('pembeli.dashboard','pembeli.search','pembeli.produk.detail'))
-      <form action="{{ route('pembeli.search') }}" method="GET" class="pt-3">
-        <input
-          name="q"
-          value="{{ request('q') }}"
-          placeholder="Cari produk..."
-          class="w-full rounded-md bg-gray-100 py-2 px-3 text-sm
-                 focus:ring-2 focus:ring-green-500 outline-none">
-      </form>
+        <form action="{{ route('pembeli.search') }}" method="GET" class="pt-3">
+          <input
+            name="q"
+            value="{{ request('q') }}"
+            placeholder="Cari produk..."
+            class="w-full rounded-md bg-gray-100 py-2 px-3 text-sm
+                  focus:ring-2 focus:ring-green-500 outline-none">
+        </form>
       @endif
 
+      {{-- LOGOUT --}}
       @auth
-        <form method="POST" action="{{ route('logout') }}">
+        <form method="POST" action="{{ route('logout') }}" class="pt-2">
           @csrf
-          <button class="w-full rounded-md bg-red-700 py-2 text-white">
+          <button
+            class="w-full flex items-center justify-center gap-2
+                  rounded-md bg-red-600 py-2 text-white">
+            <i class="bi bi-box-arrow-right"></i>
             Logout
           </button>
         </form>
@@ -156,6 +256,7 @@
 
     </div>
   </div>
+
 </header>
 
 {{-- ===== SPACER (PENGGANTI STICKY) ===== --}}

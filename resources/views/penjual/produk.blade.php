@@ -1,5 +1,4 @@
 @extends('layouts.penjual')
-@section('title','Barang')
 @section('content')
 
 @php
@@ -29,13 +28,25 @@
         </div>
     @endif
 
-
     {{-- HEADER + BUTTON --}}
-    <div class="flex items-center justify-between mb-4 w-full">
-        <h2 class="text-lg font-semibold">Daftar Produk Saya</h2>
+    <div class="flex items-start justify-between mb-4 w-full">
+        {{-- KIRI: Judul + deskripsi --}}
+        <div>
+            <h2 class="text-xl font-bold text-green-800">
+                Daftar Produk Saya
+            </h2>
 
-        <button onclick="openForm()"
-            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm shadow">
+            <p class="text-sm text-gray-600 mt-1 max-w-xl">
+                Halaman ini digunakan untuk mengelola seluruh produk yang dijual, termasuk menambah,
+                mengubah, mengatur stok, serta menonaktifkan produk yang sudah tidak tersedia.
+            </p>
+        </div>
+
+        {{-- KANAN: Tombol --}}
+        <button
+            onclick="openForm()"
+            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm shadow whitespace-nowrap"
+        >
             + Tambah Produk
         </button>
     </div>

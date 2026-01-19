@@ -36,8 +36,8 @@
     <div class="grid grid-cols-2 gap-2 w-full sm:w-auto max-w-full">
       <div class="bg-white/10 rounded-xl p-4">
         <p class="text-xs text-white/80">Rekomendasi</p>
-        <p class="text-lg font-bold">Barang Pilihan</p>
-        <p class="text-xs text-white/80 mt-1">Update tiap hari</p>
+        <p class="text-lg font-bold">Paling Dicari</p>
+        <p class="text-xs text-white/80 mt-1">Banyak dilihat dan diminati</p>
       </div>
 
       <div class="bg-white/10 rounded-xl p-4">
@@ -51,7 +51,7 @@
 
 {{-- ================= PROMO STRIP ================= --}}
 <section class="mt-5 w-full max-w-full">
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-full">
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 w-full max-w-full">
 
     <div class="rounded-xl border bg-white p-4 shadow-sm">
       <div class="text-2xl">🚚</div>
@@ -61,14 +61,20 @@
 
     <div class="rounded-xl border bg-white p-4 shadow-sm">
       <div class="text-2xl">💸</div>
-      <p class="mt-2 font-semibold text-gray-800">Diskon Harian</p>
-      <p class="text-xs text-gray-500">Promo pilihan tiap hari.</p>
+      <p class="mt-2 font-semibold text-gray-800">Hemat pilihan</p>
+      <p class="text-xs text-gray-500">Barang berkualitas, lebih terjangkau.</p>
     </div>
 
     <div class="rounded-xl border bg-white p-4 shadow-sm">
       <div class="text-2xl">🛡️</div>
       <p class="mt-2 font-semibold text-gray-800">Belanja Aman</p>
       <p class="text-xs text-gray-500">Barang tervalidasi penjual.</p>
+    </div>
+
+    <div class="rounded-xl border bg-white p-4 shadow-sm">
+      <div class="text-2xl">⏳</div>
+      <p class="mt-2 font-semibold text-gray-800">Stok Terbatas</p>
+      <p class="text-xs text-gray-500">Barang cepat habis</p>
     </div>
 
   </div>

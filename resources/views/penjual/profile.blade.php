@@ -1,14 +1,17 @@
 @extends('layouts.penjual')
-@section('title','Profil — SecondLife')
 @section('content')
 <div class="bg-white rounded-lg shadow border border-gray-100 p-6">
+
   @if(session('success'))
   <div class="mb-4 rounded-md bg-green-100 border border-green-300 p-3 text-green-800 text-sm">
     {{ session('success') }}
   </div>
   @endif
-  <h2 class="text-lg font-semibold text-green-700">Pengaturan Toko</h2>
-  <p class="text-sm text-gray-600">Nama toko, rekening, & lokasi pickup.</p>
+  <h2 class="text-2xl font-bold text-green-800">Profil Penjual</h2>
+  <p class="text-sm text-gray-600 mb-4">
+    Halaman ini digunakan untuk mengelola profil penjual dan informasi toko yang akan ditampilkan kepada pembeli,
+    termasuk data rekening, kontak, serta lokasi pickup pesanan.
+  </p>
 
   {{-- Pengaturan toko --}}
   <form method="POST"
@@ -22,7 +25,7 @@
     <div class="grid gap-6 sm:grid-cols-2">
       {{-- Nama --}}
       <div>
-        <label class="block text-sm text-gray-700">Nama Penjual</label>
+        <label class="block text-sm font-medium text-gray-700">Nama Penjual</label>
         <input
         type="text"
         name="nama_penjual"
@@ -56,7 +59,7 @@
       </div>
 
       <div>
-        <label class="block text-sm text-gray-700">Nama Toko</label>
+        <label class="block text-sm font-medium text-gray-700">Nama Toko</label>
         <input
           name="nama_toko"
           class="mt-1 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-green-600"
@@ -66,7 +69,7 @@
       </div>
 
       <div>
-        <label class="block text-sm text-gray-700">No. Telepon</label>
+        <label class="block text-sm font-medium text-gray-700">No. Telepon</label>
         <input
           name="no_telp"
           class="mt-1 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-green-600"
@@ -76,7 +79,7 @@
       </div>
 
       <div>
-        <label class="block text-sm text-gray-700">Nama Rekening</label>
+        <label class="block text-sm font-medium text-gray-700">Nama Rekening</label>
         <input
           name="nama_rekening"
           class="mt-1 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-green-600"
@@ -86,7 +89,7 @@
       </div>
 
       <div>
-        <label class="block text-sm text-gray-700">No. Rekening</label>
+        <label class="block text-sm font-medium text-gray-700">No. Rekening</label>
         <input
           name="rekening"
           class="mt-1 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-green-600"
@@ -96,7 +99,7 @@
       </div>
 
       <div class="space-y-2">
-        <label class="block text-sm text-gray-700">Kartu Identitas (KTP/SIM/Kartu lain)</label>
+        <label class="block text-sm font-medium text-gray-700">Kartu Identitas (KTP/SIM/Kartu lain)</label>
 
         @if(auth()->user()->role === 'admin')
             <a href="{{ asset('storage/'.$penjual->kartu_identitas) }}" target="_blank">Lihat KTP</a>
@@ -111,7 +114,7 @@
     <div class="space-y-4 mt-6">
       {{-- Alamat Toko --}}
       <div>
-        <label class="block text-sm text-gray-700">Alamat Toko</label>
+        <label class="block text-sm font-medium text-gray-700">Alamat Toko</label>
         <input
           id="alamat_toko"
           name="alamat_toko"
@@ -127,7 +130,7 @@
       {{-- Latitude & Longitude --}}
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm text-gray-700">Latitude</label>
+          <label class="block text-sm font-medium text-gray-700">Latitude</label>
           <input
             id="lat_toko"
             name="latitude"
@@ -138,7 +141,7 @@
         </div>
 
         <div>
-          <label class="block text-sm text-gray-700">Longitude</label>
+          <label class="block text-sm font-medium text-gray-700">Longitude</label>
           <input
             id="lng_toko"
             name="longitude"
@@ -151,7 +154,7 @@
 
       {{-- Peta Lokasi Toko --}}
       <div>
-        <label class="block text-sm text-gray-700 mb-1">Lokasi Toko di Peta</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi Toko di Peta</label>
         <div id="map-toko" class="w-full h-56 sm:h-64 rounded-md border"></div>
         <p class="mt-1 text-xs text-gray-500">
           Klik pada peta atau geser pin untuk mengatur lokasi toko. Latitude & longitude akan terisi otomatis.

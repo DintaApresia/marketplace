@@ -80,14 +80,14 @@
       {{-- ⚠️ SATU-SATUNYA BAGIAN YANG BOLEH SCROLL --}}
       <div class="overflow-x-auto">
 
-        <table class="min-w-[1000px] w-full text-sm">
+        <table class="min-w-[400] w-full text-sm">
           <thead class="bg-gray-50 text-gray-600">
             <tr>
               <th class="text-left px-4 py-3">User</th>
               <th class="text-left px-4 py-3">Role</th>
               <th class="text-left px-4 py-3">Seller Status</th>
               <th class="text-left px-4 py-3">Terdaftar</th>
-              <th class="text-right px-4 py-3">Aksi</th>
+              <th class="text-left px-4 py-3">Aksi</th>
             </tr>
           </thead>
 
@@ -118,18 +118,18 @@
                   </span>
                 </td>
 
-                <td class="px-4 py-3 text-gray-600">
+                <td class="px-3 py-3 text-gray-600">
                   {{ optional($u->created_at)->format('d M Y') }}
                 </td>
 
                 <td class="px-4 py-3">
-                  <div class="flex justify-end gap-2 whitespace-nowrap">
-                    @if (Route::has('admin.users.edit'))
+                  <div class="flex center gap-2 whitespace-nowrap">
+                    <!-- @if (Route::has('admin.users.edit'))
                       <a href="{{ route('admin.users.edit', $u->id) }}"
                         class="px-3 py-1.5 rounded bg-green-600 text-white text-xs hover:bg-green-700">
                         Edit
                       </a>
-                    @endif
+                    @endif -->
 
                     @if (Route::has('admin.users.destroy'))
                       <form method="POST" action="{{ route('admin.users.destroy', $u->id) }}"
@@ -137,7 +137,7 @@
                         @csrf
                         @method('DELETE')
                         <button
-                          class="px-3 py-1.5 rounded bg-red-600 text-white text-xs hover:bg-red-700">
+                          class="px-1 py-1.5 rounded bg-red-600 text-white text-xs hover:bg-red-700">
                           Hapus
                         </button>
                       </form>

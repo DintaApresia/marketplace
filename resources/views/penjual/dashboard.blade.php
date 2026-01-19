@@ -1,8 +1,16 @@
 @extends('layouts.penjual')
 
-@section('title', 'Dashboard')
-
 @section('content')
+
+{{-- HEADER HALAMAN --}}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-green-800">
+        Dashboard Penjual
+    </h2>
+    <p class="text-sm text-gray-600 mt-1 max-w-2xl">
+        Halaman ini digunakan untuk menampilkan status toko, jumlah produk dan juga banyaknya pesanan yang masuk beserta dengan status pesanan.
+    </p>
+</div>
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 

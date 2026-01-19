@@ -33,13 +33,13 @@ class AdminController extends Controller
 
     public function show()
     {
-        $penjuals = User::with('penjual')
-            ->where('role', 'penjual')
+        $penjuals = Penjual::with('user')
             ->latest()
             ->get();
 
         return view('admin.toko', compact('penjuals'));
     }
+
 
     public function penjuals()
     {

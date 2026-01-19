@@ -7,21 +7,18 @@ use App\Models\Produk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\Pembeli;
 
 class KeranjangController extends Controller
 {
     public function index()
     {
-        // Ambil keranjang user + relasi produk (stok/harga terbaru dari DB)
         $items = Keranjang::with('produk')
             ->where('id_user', Auth::id())
             ->get();
 
-        // Bentuk array seperti format view kamu: $cart[id_produk] = [...]
         $cart = $items->mapWithKeys(function ($k) {
             $p = $k->produk;
-
-            // Kalau produk sudah terhapus, skip (atau bisa auto-delete baris keranjang)
             if (!$p) return [];
 
             return [$p->id => [
@@ -36,7 +33,20 @@ class KeranjangController extends Controller
 
         $total = collect($cart)->sum(fn($i) => $i['harga'] * $i['qty']);
 
-        return view('pembeli.keranjang', compact('cart', 'total'));
+        // ✅ TAMBAHAN DI SINI
+        $pembeli = Pembeli::where('idUser', Auth::id())->first();
+
+        $profilLengkap = $pembeli
+            && !empty($pembeli->nama_pembeli)
+            && !empty($pembeli->no_telp)
+            && !empty($pembeli->alamat);
+
+        return view('pembeli.keranjang', compact(
+            'cart',
+            'total',
+            'pembeli',
+            'profilLengkap'
+        ));
     }
 
     public function tambah(Request $request, Produk $produk)

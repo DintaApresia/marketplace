@@ -1,8 +1,19 @@
 @extends('layouts.penjual')
 
-@section('title','Laporan Penjualan')
-
 @section('content')
+<div class="flex items-start justify-between mb-4 w-full">
+    {{-- KIRI: Judul + deskripsi --}}
+    <div>
+        <h2 class="text-xl font-bold text-green-800">
+            Laporan Penjualan
+        </h2>
+
+        <p class="text-sm text-gray-600 mt-1 max-w-xl">
+            Halaman ini menampilkan ringkasan laporan penjualan toko, termasuk jumlah transaksi,
+            total pendapatan, dan rekap penjualan berdasarkan periode tertentu.
+        </p>
+    </div>
+</div>
 <div class="max-w-4xl mx-auto bg-white p-8 border border-gray-300 text-sm text-gray-800">
 
     {{-- ================= HEADER ================= --}}
@@ -102,14 +113,14 @@
         @if($produkTerjual->count())
             <div class="overflow-x-auto">
                 <table class="w-full border border-collapse text-sm">
-                    <thead class="bg-gray-100">
+                    <thead class="bg-slate-700">
                         <tr>
-                            <th class="border px-3 py-2 w-10 text-center">No</th>
-                            <th class="border px-3 py-2">Tgl Pembelian</th>
-                            <th class="border px-3 py-2">Nama Pembeli</th>
-                            <th class="border px-3 py-2">Nama Produk</th>
-                            <th class="border px-3 py-2 text-center">Jumlah</th>
-                            <th class="border px-3 py-2 text-right">Subtotal</th>
+                            <th class="border px-3 text-white py-2 w-10 text-center">No</th>
+                            <th class="border px-3 text-white py-2">Tgl Pembelian</th>
+                            <th class="border px-3 text-white py-2">Nama Pembeli</th>
+                            <th class="border px-3 text-white py-2">Nama Produk</th>
+                            <th class="border px-3 text-white py-2 text-center">Jumlah</th>
+                            <th class="border px-3 text-white py-2 text-right">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>

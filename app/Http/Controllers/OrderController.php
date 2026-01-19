@@ -67,7 +67,9 @@ class OrderController extends Controller
      */
     public function checkout()
     {
-        // ambil keranjang dari DB
+        // =====================
+        // 1️⃣ Ambil keranjang
+        // =====================
         $items = Keranjang::with('produk')
             ->where('id_user', Auth::id())
             ->get();
@@ -79,7 +81,7 @@ class OrderController extends Controller
             return [$p->id => [
                 'id'     => (int) $p->id,
                 'nama'   => $p->nama_barang,
-                'harga'  => (float) $p->harga,  // harga decimal
+                'harga'  => (float) $p->harga,
                 'gambar' => $p->gambar,
                 'stok'   => (int) $p->stok,
                 'qty'    => (int) $k->jumlah,
@@ -87,31 +89,65 @@ class OrderController extends Controller
         })->toArray();
 
         if (empty($cart)) {
-            return redirect()->route('pembeli.keranjang')
+            return redirect()
+                ->route('pembeli.keranjang')
                 ->with('error', 'Keranjang masih kosong.');
         }
 
+        // =====================
+        // 2️⃣ Ambil data pembeli
+        // =====================
         $pembeli = Pembeli::where('idUser', Auth::id())->first();
 
-        $subtotal = collect($cart)->sum(fn($i) => $i['harga'] * $i['qty']);
+        // =====================
+        // 3️⃣ VALIDASI PROFIL LENGKAP (WAJIB)
+        // =====================
+        if (
+            !$pembeli ||
+            empty($pembeli->nama_pembeli) ||
+            empty($pembeli->no_telp) ||
+            empty($pembeli->alamat)
+        ) {
+            return redirect()
+                ->route('pembeli.keranjang')
+                ->with('error', 'Lengkapi data profil terlebih dahulu sebelum checkout.');
+        }
 
-        // ambil penjual dari produk pertama (buat rekening transfer + ongkir)
+        // =====================
+        // 4️⃣ Hitung subtotal
+        // =====================
+        $subtotal = collect($cart)->sum(fn ($i) => $i['harga'] * $i['qty']);
+
+        // =====================
+        // 5️⃣ Ambil penjual (dari produk pertama)
+        // =====================
         $firstProdukId = array_key_first($cart);
         $produk = Produk::with('penjual')->findOrFail($firstProdukId);
         $penjual = $produk->penjual;
 
+        // =====================
+        // 6️⃣ Hitung ongkir
+        // =====================
         $ongkir = $this->hitungOngkir(
             $penjual->latitude ?? null,
             $penjual->longitude ?? null,
-            $pembeli->latitude ?? null,
-            $pembeli->longitude ?? null
+            $pembeli->latitude,
+            $pembeli->longitude
         );
 
+        // =====================
+        // 7️⃣ Total
+        // =====================
         $total = $subtotal + $ongkir;
 
-        return view('pembeli.checkout', compact('cart', 'pembeli', 'subtotal', 'ongkir', 'total', 'penjual'));
+        // =====================
+        // 8️⃣ Tampilkan checkout
+        // =====================
+        return view(
+            'pembeli.checkout',
+            compact('cart', 'pembeli', 'subtotal', 'ongkir', 'total', 'penjual')
+        );
     }
-
 
     /**
      * POST /order/simpan

@@ -10,12 +10,12 @@
 <body class="bg-gray-100 min-h-screen text-gray-800 overflow-x-hidden">
 
 {{-- ================= HEADER ================= --}}
-<header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-40 w-full">
+<header class="bg-white fixed top-0 left-0 right-0 z-40 w-full
+               border-b border-gray-200 shadow-sm">
     <div class="flex items-center justify-between px-4 md:px-6 py-4">
 
         {{-- Left --}}
         <div class="flex items-center gap-3">
-            {{-- Hamburger (mobile only) --}}
             <button
                 onclick="toggleSidebar()"
                 class="md:hidden text-2xl text-gray-700 focus:outline-none">
@@ -23,7 +23,7 @@
             </button>
 
             <div>
-                <h1 class="text-lg md:text-xl font-bold text-green-700">
+                <h1 class="text-lg md:text-xl font-bold text-teal-600">
                     Panel Penjual
                 </h1>
                 <p class="hidden md:block text-xs text-gray-500">
@@ -38,96 +38,92 @@
                 {{ auth()->user()->name }}
             </span>
             <img
-                src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&background=22c55e&color=ffffff"
+                src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&background=14b8a6&color=ffffff"
                 alt="Avatar"
-                class="w-9 h-9 rounded-full border shadow-sm"
+                class="w-9 h-9 rounded-full border border-gray-200 shadow-sm"
             >
         </div>
 
     </div>
 </header>
 
-{{-- ================= WRAPPER (PENTING) ================= --}}
+{{-- ================= WRAPPER ================= --}}
 <div class="flex pt-[72px]">
 
-{{-- ================= SIDEBAR ================= --}}
-<aside
-  id="sidebar"
-  class="fixed md:sticky md:top-[72px] left-0
-         h-[calc(100vh-72px)] md:h-[calc(100vh-72px)]
-         w-64 bg-white shadow-lg border-r
-         transform -translate-x-full md:translate-x-0
-         transition-transform duration-300
-         z-30 overflow-y-auto">
+    {{-- ================= SIDEBAR ================= --}}
+    <aside
+    id="sidebar"
+    class="fixed md:sticky md:top-[72px] left-0
+            h-[calc(100vh-72px)]
+            w-64
+            bg-slate-800 text-slate-100
+            transform -translate-x-full md:translate-x-0
+            transition-transform duration-300
+            z-30 overflow-y-auto">
 
-    <nav class="p-4 space-y-1 text-sm">
+        <nav class="p-4 text-sm h-full flex flex-col">
 
-        @php
-            $active = 'bg-green-50 text-green-700 font-semibold border-l-4 border-green-600';
-            $normal = 'text-gray-700 hover:bg-green-50';
-        @endphp
+            @php
+                $active = 'bg-slate-700 text-white font-semibold';
+                $normal = 'text-slate-300 hover:bg-slate-700 hover:text-white';
+            @endphp
 
-        <a href="{{ route('penjual.dashboard') }}"
-           class="flex items-center gap-3 px-3 py-2 rounded-md transition {{ request()->routeIs('penjual.dashboard') ? $active : $normal }}">
-            📊 <span>Dashboard</span>
-        </a>
+            {{-- MENU UTAMA --}}
+            <div class="space-y-1">
+                <a href="{{ route('penjual.dashboard') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-md transition {{ request()->routeIs('penjual.dashboard') ? $active : $normal }}">
+                    📊 <span>Dashboard</span>
+                </a>
 
-        <a href="{{ route('penjual.profile') }}"
-           class="flex items-center gap-3 px-3 py-2 rounded-md transition {{ request()->routeIs('penjual.profile') ? $active : $normal }}">
-            👤 <span>Profil Toko</span>
-        </a>
+                <a href="{{ route('penjual.profile') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-md transition {{ request()->routeIs('penjual.profile') ? $active : $normal }}">
+                    👤 <span>Profil Penjual</span>
+                </a>
 
-        <a href="{{ route('produk.index') }}"
-           class="flex items-center gap-3 px-3 py-2 rounded-md transition {{ request()->routeIs('produk.*') ? $active : $normal }}">
-            📦 <span>Produk Saya</span>
-        </a>
+                <a href="{{ route('produk.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-md transition {{ request()->routeIs('produk.*') ? $active : $normal }}">
+                    📦 <span>Produk Saya</span>
+                </a>
 
-        <a href="{{ route('penjual.orders.masuk') }}"
-           class="flex items-center gap-3 px-3 py-2 rounded-md transition {{ request()->routeIs('penjual.orders.masuk') ? $active : $normal }}">
-            🧾 <span>Pesanan Masuk</span>
-        </a>
+                <a href="{{ route('penjual.orders.masuk') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-md transition {{ request()->routeIs('penjual.orders.masuk') ? $active : $normal }}">
+                    🧾 <span>Pesanan Masuk</span>
+                </a>
 
-        <a href="{{ route('penjual.laporan') }}"
-           class="flex items-center gap-3 px-3 py-2 rounded-md transition {{ request()->routeIs('penjual.laporan') ? $active : $normal }}">
-            📈 <span>Laporan Penjualan</span>
-        </a>
+                <a href="{{ route('penjual.laporan') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-md transition {{ request()->routeIs('penjual.laporan') ? $active : $normal }}">
+                    📈 <span>Laporan Penjualan</span>
+                </a>
+            </div>
 
-        {{-- Divider --}}
-        <div class="my-4 border-t"></div>
+            {{-- LOGOUT DI BAWAH --}}
+            <div class="mt-auto pt-4 border-t border-slate-700">
+                <form action="{{ route('logout') }}" method="POST"
+                    onsubmit="return confirm('Yakin ingin keluar?')">
+                    @csrf
+                    <button
+                        type="submit"
+                        class="w-full flex items-center gap-3 px-3 py-2 rounded-md
+                            text-rose-400 hover:bg-slate-700 hover:text-rose-300 transition">
+                        🚪 Logout
+                    </button>
+                </form>
+            </div>
 
-        <form action="{{ route('logout') }}" method="POST"
-              onsubmit="return confirm('Yakin ingin keluar?')">
-            @csrf
-            <button
-                type="submit"
-                class="w-full flex items-center gap-3 px-3 py-2 rounded-md
-                       text-red-600 hover:bg-red-50 transition">
-                🚪 Logout
-            </button>
-        </form>
+        </nav>
+    </aside>
 
-    </nav>
-</aside>
-
-{{-- ================= MAIN CONTENT ================= --}}
-<main class="flex-1 p-4 md:p-6 bg-gray-100 overflow-x-hidden">
-
-    {{-- Page Title --}}
-    <div class="mb-6">
-        <h2 class="text-lg font-semibold text-gray-800">
-            @yield('title')
-        </h2>
-        <p class="text-sm text-gray-500">
-            Kelola toko dan penjualan Anda
-        </p>
-    </div>
-
-    {{-- Page Content --}}
-    <div class="bg-white rounded-xl shadow-sm p-4 md:p-6">
-        @yield('content')
-    </div>
-
-</main>
+    {{-- ================= MAIN CONTENT ================= --}}
+    <main class="flex-1 p-4 md:p-6 bg-gray-100 overflow-x-hidden">
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-800">
+                @yield('title')
+            </h2>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
+            @yield('content')
+        </div>
+    </main>
 
 </div>
 

@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Kelola Barang')
+@section('title', 'Produk Penjual')
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 py-6">
@@ -8,10 +8,7 @@
 
         {{-- JUDUL --}}
         <div>
-            <h1 class="text-2xl font-semibold text-gray-800">Kelola Barang</h1>
-            <p class="text-sm text-gray-500">
-                Kelola data barang/produk yang ada di marketplace.
-            </p>
+            <h1 class="text-2xl font-semibold text-gray-800">Produk Penjual</h1>
 
             {{-- TOMBOL KEMBALI --}}
             <a href="{{ route('admin.toko.show') }}"
@@ -67,7 +64,7 @@
                         <th class="px-4 py-3 text-left">Stok</th>
                         <th class="px-4 py-3 text-left">Status</th>
                         <th class="px-4 py-3 text-left">Dibuat</th>
-                        <th class="px-4 py-3 text-right">Aksi</th>
+                        <!-- <th class="px-4 py-3 text-right">Aksi</th> -->
                     </tr>
                 </thead>
                 <tbody class="divide-y">
@@ -148,7 +145,7 @@
                             </td>
 
                             {{-- Aksi --}}
-                            <td class="px-4 py-3 text-right">
+                            <!-- <td class="px-4 py-3 text-right">
                                 <div class="flex justify-end gap-2">
                                     <a href="{{ route('admin.barang.edit', $b->id) }}"
                                     class="px-3 py-1.5 rounded-md border text-xs hover:bg-gray-50">
@@ -168,7 +165,7 @@
                                         </button>
                                     </form>
                                 </div>
-                            </td>
+                            </td> -->
 
                         </tr>
                     @empty

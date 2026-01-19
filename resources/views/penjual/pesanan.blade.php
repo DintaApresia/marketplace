@@ -1,11 +1,14 @@
 @extends('layouts.penjual')
-@section('title', 'Pesanan Masuk')
 
 @section('content')
 
 <div class="py-6 px-2 md:px-4 overflow-x-hidden">
 
-  <h1 class="text-2xl font-bold mb-6 text-gray-800">Pesanan Masuk</h1>
+  <h1 class="text-2xl font-bold mb-6 text-green-800">Pesanan Masuk</h1>
+  <p class="text-sm text-gray-600 mb-4">
+    Halaman ini menampilkan daftar pesanan yang masuk dari pembeli dan digunakan untuk
+    memproses pesanan, memeriksa detail transaksi, serta memperbarui status pengiriman.
+  </p>
 
   @if(session('success'))
     <div class="mb-4 bg-green-50 border border-green-100 text-green-800 rounded-lg p-3 text-sm">
@@ -26,17 +29,16 @@
       {{-- 🔑 WRAPPER KHUSUS TABEL --}}
       <div class="relative overflow-x-auto">
 
-        <table class="min-w-max w-full divide-y divide-gray-200 text-sm">
-
-          <thead class="bg-gray-50 sticky top-0 z-10">
+        <table class="min-w-max w-full divide-y divide-white-300 text-sm">
+          <thead class="bg-slate-800">
             <tr>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">Kode Order</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">Pembeli</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">Produk</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">Jumlah</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">Total Produk</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">Total Order</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">Status</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase whitespace-nowrap">Kode Order</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase whitespace-nowrap">Pembeli</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase whitespace-nowrap">Produk</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase whitespace-nowrap">Jumlah</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase whitespace-nowrap">Total Produk</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase whitespace-nowrap">Total Order</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase whitespace-nowrap">Status</th>
               <th class="px-4 py-3 whitespace-nowrap"></th>
             </tr>
           </thead>

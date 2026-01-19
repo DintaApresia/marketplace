@@ -1,13 +1,13 @@
 @extends('layouts.admin')
 
-@section('title', 'Daftar Toko')
+@section('title', 'Daftar Penjual')
 
 @section('content')
 <div class="max-w-6xl mx-auto px-4 py-8">
 
-    <h1 class="text-2xl font-bold mb-2">Daftar Toko</h1>
+    <h1 class="text-2xl font-bold mb-2">Daftar Penjual</h1>
     <p class="text-gray-500 mb-6">
-        Menampilkan semua toko (penjual) yang terdaftar.
+        Menampilkan semua penjual yang terdaftar.
     </p>
 
     <div class="overflow-x-auto bg-white rounded shadow">
@@ -16,7 +16,9 @@
                 <tr>
                     <th class="px-4 py-3 text-left border">No</th>
                     <th class="px-4 py-3 text-left border">Nama Toko</th>
+                    <th class="px-4 py-3 text-left border">Alamat Toko</th>
                     <th class="px-4 py-3 text-left border">Nama Penjual</th>
+                    <th class="px-4 py-3 text-left border">Email</th>
                     <th class="px-4 py-3 text-left border">No HP</th>
                     <th class="px-4 py-3 text-center border">Aksi</th>
                 </tr>
@@ -29,15 +31,23 @@
                         </td>
 
                         <td class="px-4 py-2 border font-medium">
-                            {{ $item->penjual->nama_toko ?? '-' }}
+                            {{ $item->nama_toko ?? '-' }}
                         </td>
 
                         <td class="px-4 py-2 border">
-                            {{ $item->name }}
+                            {{ $item->alamat_toko ?? '-' }}
                         </td>
 
                         <td class="px-4 py-2 border">
-                            {{ $item->penjual->no_telp ?? '-' }}
+                            {{ $item->nama_penjual ?? '-' }}
+                        </td>
+
+                        <td class="px-4 py-2 border">
+                            {{ $item->user->email ?? '-'}}
+                        </td>
+
+                        <td class="px-4 py-2 border">
+                            {{ $item->no_telp ?? '-' }}
                         </td>
 
                         <td class="px-4 py-2 border text-center space-x-2">

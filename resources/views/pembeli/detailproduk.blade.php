@@ -130,16 +130,27 @@
 
             {{-- Aksi --}}
             <div class="pt-4 mt-auto flex gap-3">
+                {{-- Tambah ke Keranjang --}}
                 <form action="{{ route('pembeli.keranjang.tambah', $produk->id) }}" method="POST" class="flex-1">
                     @csrf
                     <button
+                        type="submit"
                         class="w-full bg-green-600 hover:bg-green-700 text-white text-sm py-2 rounded-md
                             disabled:opacity-50 disabled:cursor-not-allowed"
                         {{ $produk->stok <= 0 ? 'disabled' : '' }}>
                         Tambah ke Keranjang
                     </button>
                 </form>
+
+                {{-- Checkout --}}
+                <a
+                    href="{{ $produk->stok > 0 ? route('pembeli.checkout') : '#' }}"
+                    class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 rounded-md
+                        {{ $produk->stok <= 0 ? 'opacity-50 pointer-events-none' : '' }}">
+                    Checkout
+                </a>
             </div>
+
 
             {{-- Back --}}
             <a href="{{ $back }}" class="text-xs sm:text-sm text-gray-500 hover:text-gray-700">
