@@ -258,17 +258,18 @@ class PenjualController extends Controller
             ->join('produk', 'order_items.produk_id', '=', 'produk.id')
             ->join('users', 'orders.user_id', '=', 'users.id')
             ->where('produk.user_id', $sellerId)
-            ->where('orders.status_pesanan', 'selesai')
             ->whereBetween('orders.created_at', [$startDate, $endDate])
             ->select(
                 'produk.nama_barang',
                 'order_items.jumlah',
                 'order_items.subtotal_item',
                 'users.name as nama_pembeli',
+                'orders.status_pesanan', // ✅ TAMBAH
                 'orders.created_at as tanggal_pembelian'
             )
             ->orderBy('orders.created_at', 'desc')
             ->get();
+
 
         $totalSubtotal = $produkTerjual->sum('subtotal_item');
 

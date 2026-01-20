@@ -119,6 +119,7 @@
                             <th class="border px-3 text-white py-2">Tgl Pembelian</th>
                             <th class="border px-3 text-white py-2">Nama Pembeli</th>
                             <th class="border px-3 text-white py-2">Nama Produk</th>
+                            <th class="border px-3 text-white py-2">Status Pesanan</th>
                             <th class="border px-3 text-white py-2 text-center">Jumlah</th>
                             <th class="border px-3 text-white py-2 text-right">Subtotal</th>
                         </tr>
@@ -139,6 +140,21 @@
                                     {{ $item->nama_barang }}
                                 </td>
                                 <td class="border px-3 py-2 text-center">
+                                    @php
+                                        $statusColor = match($item->status_pesanan) {
+                                            'dikemas' => 'text-yellow-600',
+                                            'dikirim' => 'text-blue-600',
+                                            'selesai' => 'text-green-700',
+                                            'ditolak' => 'text-red-600',
+                                            default => 'text-gray-600'
+                                        };
+                                    @endphp
+
+                                    <span class="font-semibold {{ $statusColor }}">
+                                        {{ ucfirst($item->status_pesanan) }}
+                                    </span>
+                                </td>
+                                <td class="border px-3 py-2 text-center">
                                     {{ $item->jumlah }}
                                 </td>
                                 <td class="border px-3 py-2 text-right font-medium text-green-700">
@@ -149,7 +165,7 @@
                             <tr class="bg-gray-100 font-semibold">
                         @endforeach
                         <tr class="bg-gray-100 font-semibold">
-                            <td colspan="5" class="border px-3 py-2 text-right">
+                            <td colspan="6" class="border px-3 py-2 text-right">
                                 Total Subtotal
                             </td>
                             <td class="border px-3 py-2 text-right text-green-700">

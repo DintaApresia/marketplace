@@ -75,6 +75,24 @@
             color: #6b7280;
             text-align: center;
         }
+        .thead-dark th {
+            background-color: #334155; /* slate-700 */
+            color: #ffffff;
+            font-weight: bold;
+            text-align: center;
+        }
+        tbody td {
+            text-align: left;
+        }
+
+        tbody td.text-center {
+            text-align: center;
+        }
+
+        tbody td.text-right {
+            text-align: right;
+        }
+
     </style>
 </head>
 
@@ -130,14 +148,15 @@
 
         @if(count($produkTerjual))
             <table>
-                <thead>
+                <thead class="thead-dark">
                     <tr>
-                        <th class="text-center" style="width:5%">No</th>
+                        <th style="width:5%">No</th>
                         <th style="width:15%">Tgl Pembelian</th>
                         <th style="width:20%">Nama Pembeli</th>
                         <th>Nama Produk</th>
-                        <th class="text-center" style="width:10%">Jumlah</th>
-                        <th class="text-right" style="width:18%">Subtotal</th>
+                        <th style="width:12%">Status</th>
+                        <th style="width:10%">Jumlah</th>
+                        <th style="width:18%">Subtotal</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -149,6 +168,9 @@
                             </td>
                             <td>{{ $item->nama_pembeli }}</td>
                             <td>{{ $item->nama_barang }}</td>
+                            <td class="text-center" style="font-weight:600;">
+                                {{ ucfirst($item->status_pesanan) }}
+                            </td>
                             <td class="text-center">{{ $item->jumlah }}</td>
                             <td class="text-right">
                                 Rp {{ number_format($item->subtotal_item, 0, ',', '.') }}
@@ -156,7 +178,7 @@
                         </tr>
                     @endforeach
                     <tr style="font-weight:bold;background:#f3f4f6;">
-                        <td colspan="5" style="text-align:right;">
+                        <td colspan="6" style="text-align:right;">
                             Total Subtotal
                         </td>
                         <td style="text-align:right;">

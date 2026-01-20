@@ -81,7 +81,7 @@
       <div class="overflow-x-auto">
 
         <table class="min-w-[400] w-full text-sm">
-          <thead class="bg-gray-50 text-gray-600">
+          <thead class="bg-slate-800 text-white">
             <tr>
               <th class="text-left px-4 py-3">User</th>
               <th class="text-left px-4 py-3">Role</th>

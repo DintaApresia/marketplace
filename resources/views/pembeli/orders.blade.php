@@ -26,16 +26,16 @@
     <div class="bg-white rounded-lg shadow overflow-hidden">
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 text-sm">
-          <thead class="bg-gray-50">
+          <thead class="bg-slate-800">
             <tr>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Kode Order</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Penjual</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Produk</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Jumlah</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Total Produk</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Total Order</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Pesanan Selesai</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase">Kode Order</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase">Penjual</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase">Produk</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase">Jumlah</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase">Total Produk</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase">Total Order</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase">Status</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase">Pesanan Selesai</th>
               <!-- <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Aksi</th> -->
             </tr>
           </thead>

@@ -45,53 +45,45 @@
             <div>
                 <label class="text-sm font-medium text-gray-700">Email</label>
                 <input type="email"
-                    name="email"
-                    value="{{ old('email', $user->email) }}"
-                    readonly
-                    class="mt-1 w-full border rounded-md px-3 py-2 text-sm
-                        bg-gray-100 cursor-not-allowed
-                        focus:ring-green-600 focus:border-green-600">
-                <p class="text-xs text-gray-500">
-                    Data ini digunakan untuk identitas akun dan komunikasi
-                </p>
+                       value="{{ old('email', $user->email) }}"
+                       readonly
+                       class="mt-1 w-full border rounded-md px-3 py-2 text-sm bg-gray-100">
             </div>
 
             {{-- Nama User --}}
             <div>
                 <label class="text-sm font-medium text-gray-700">Nama User</label>
                 <input name="name"
-                    value="{{ old('name', $user->name) }}"
-                    class="mt-1 w-full border rounded-md px-3 py-2 text-sm
-                        focus:ring-green-600 focus:border-green-600"
-                    placeholder="Nama user">
+                       value="{{ old('name', $user->name) }}"
+                       class="mt-1 w-full border rounded-md px-3 py-2 text-sm">
             </div>
 
             {{-- Nama Penerima --}}
             <div>
                 <label class="text-sm font-medium text-gray-700">Nama Penerima</label>
                 <input name="receiver_name"
-                    value="{{ old('receiver_name', $pembeli->nama_pembeli ?? '') }}"
-                    class="mt-1 w-full border rounded-md px-3 py-2 text-sm focus:ring-green-600 focus:border-green-600"
-                    placeholder="Nama penerima">
-
+                       value="{{ old('receiver_name', $pembeli->nama_pembeli ?? '') }}"
+                       class="mt-1 w-full border rounded-md px-3 py-2 text-sm">
                 <p class="text-xs text-gray-600 mt-0.5">
                     Digunakan pada label pengiriman
                 </p>
             </div>
 
-            {{-- No. Telepon --}}
+            {{-- No Telepon --}}
             <div>
                 <label class="text-sm font-medium text-gray-700">No. Telepon</label>
-                <input name="phone"
-                    value="{{ old('phone', $pembeli->no_telp ?? '') }}"
-                    class="mt-1 w-full border rounded-md px-3 py-2 text-sm focus:ring-green-600 focus:border-green-600"
-                    placeholder="08xxxxxxxxxx">
+                <input type="text"
+                       name="phone"
+                       inputmode="numeric"
+                       maxlength="13"
+                       oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                       value="{{ old('phone', $pembeli->no_telp ?? '') }}"
+                       class="mt-1 w-full border rounded-md px-3 py-2 text-sm">
                 <p class="text-xs text-gray-600 mt-0.5">
                     Aktif & dapat dihubungi kurir
                 </p>
             </div>
 
-            {{-- Tombol --}}
             <div class="sm:col-span-2">
                 <button type="submit"
                         class="bg-green-700 text-white px-4 py-2 rounded-md text-sm hover:bg-green-800">
@@ -101,7 +93,7 @@
         </form>
     </div>
 
-    {{-- RIWAYAT PESANAN --}}
+    {{-- RIWAYAT PESANAN (TETAP ADA, TIDAK DIHAPUS) --}}
     <div class="bg-white border shadow-sm rounded-xl p-6">
         <div class="px-6 py-3 border-b bg-gray-50">
             <h2 class="text-lg font-semibold text-gray-800">Riwayat Pesanan</h2>
@@ -110,21 +102,20 @@
             </p>
         </div>
 
-        {{-- BODY --}}
         <div class="p-6 space-y-3">
             <p class="text-sm text-gray-600">
                 Cek status dan detail pesanan.
             </p>
 
             <a href="{{ route('pembeli.orders.index') }}"
-            class="inline-flex items-center gap-2 bg-green-700 text-white
-                    px-4 py-2 rounded-md text-sm hover:bg-green-800 transition w-fit">
+               class="inline-flex items-center gap-2 bg-green-700 text-white
+                      px-4 py-2 rounded-md text-sm hover:bg-green-800 transition w-fit">
                 Lihat Pesanan Saya
             </a>
         </div>
     </div>
 
-    {{-- ALAMAT PENGIRIMAN --}}
+    {{-- ALAMAT PENGIRIMAN (INI YANG DIPERBAIKI) --}}
     <div class="bg-white border shadow-sm rounded-xl p-6 space-y-4">
         <div class="px-6 py-3 border-b bg-gray-50">
             <h2 class="text-lg font-semibold text-gray-800">Alamat Pengiriman</h2>
@@ -141,28 +132,33 @@
                 <input id="alamat"
                        name="alamat"
                        value="{{ old('alamat', $pembeli->alamat ?? '') }}"
-                       class="mt-1 w-full border rounded-md px-3 py-2 text-sm focus:ring-green-600 focus:border-green-600"
-                       placeholder="Masukan alamat">
+                       class="mt-1 w-full border rounded-md px-3 py-2 text-sm"
+                       placeholder="Masukkan alamat lengkap">
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="text-sm font-medium text-gray-700">Latitude</label>
-                    <input id="latitude" name="latitude"
+                    <input id="latitude"
+                           name="latitude"
                            value="{{ old('latitude', $pembeli->latitude ?? '') }}"
-                           class="mt-1 w-full bg-gray-50 border rounded-md px-3 py-2 text-sm" readonly>
+                           readonly
+                           class="mt-1 w-full bg-gray-50 border rounded-md px-3 py-2 text-sm">
                 </div>
 
                 <div>
                     <label class="text-sm font-medium text-gray-700">Longitude</label>
-                    <input id="longitude" name="longitude"
+                    <input id="longitude"
+                           name="longitude"
                            value="{{ old('longitude', $pembeli->longitude ?? '') }}"
-                           class="mt-1 w-full bg-gray-50 border rounded-md px-3 py-2 text-sm" readonly>
+                           readonly
+                           class="mt-1 w-full bg-gray-50 border rounded-md px-3 py-2 text-sm">
                 </div>
             </div>
 
             <div>
-                <div id="map" class="w-full h-48 rounded-md border"></div>
+                <div id="map" class="w-full h-72 rounded-md border"></div>
+                <p id="location-status" class="text-xs text-gray-500 mt-1"></p>
             </div>
 
             <button type="submit"
@@ -180,35 +176,39 @@
             <p class="text-sm text-yellow-800">
                 Pengajuan sebagai penjual sedang ditinjau admin.
             </p>
+
         @elseif($user->seller_status === 'rejected')
             <p class="text-sm text-red-700">
                 Pengajuan sebelumnya ditolak.
             </p>
             <a href="{{ route('penjual.pengajuan-saya') }}"
-                class="inline-block bg-green-700 text-white px-3 py-1.5 rounded-md text-xs">
+            class="inline-block bg-green-700 text-white px-3 py-1.5 rounded-md text-xs">
                 Detail Penolakan
             </a>
+
+        @elseif($user->seller_status === 'approved')
+            <p class="text-sm text-green-700">
+                Akun kamu sudah aktif sebagai penjual.
+            </p>
+
         @else
             <p class="text-sm text-gray-700">
                 Saat ini kamu masih terdaftar sebagai pembeli.
             </p>
+
+            <a href="{{ route('penjual.daftar.submit') }}"
+            class="inline-block mt-2 bg-green-700 text-white px-4 py-2 rounded-md text-sm hover:bg-green-800">
+                Daftar sebagai Penjual
+            </a>
         @endif
     </div>
+
 
 </div>
 @endsection
 
-
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<style>
-  #map {
-      height: 300px !important;
-      width: 100% !important;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-  }
-</style>
 @endpush
 
 @push('scripts')
@@ -217,135 +217,88 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    const latInput      = document.getElementById('latitude');
-    const lngInput      = document.getElementById('longitude');
-    const addressInput  = document.getElementById('alamat');
-    const statusEl      = document.getElementById('location-status');
+    const latInput     = document.getElementById('latitude');
+    const lngInput     = document.getElementById('longitude');
+    const alamatInput  = document.getElementById('alamat');
+    const statusEl     = document.getElementById('location-status');
 
-    let initialLat = -2.5;
-    let initialLng = 118.0;
-    let initialZoom = 5;
+    let lat  = latInput.value ? parseFloat(latInput.value) : -6.200000;
+    let lng  = lngInput.value ? parseFloat(lngInput.value) : 106.816666;
+    let zoom = latInput.value ? 16 : 6;
 
-    @if(isset($pembeli) && $pembeli->latitude && $pembeli->longitude)
-        initialLat = {{ $pembeli->latitude }};
-        initialLng = {{ $pembeli->longitude }};
-        initialZoom = 16;
-    @endif
-
-    const map = L.map('map').setView([initialLat, initialLng], initialZoom);
+    const map = L.map('map').setView([lat, lng], zoom);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    let marker = null;
-    let geocodeTimeout = null;
+    let marker = L.marker([lat, lng], { draggable: true }).addTo(map);
 
-    @if(isset($pembeli) && $pembeli->latitude && $pembeli->longitude)
-        marker = L.marker([{{ $pembeli->latitude }}, {{ $pembeli->longitude }}]).addTo(map);
-    @endif
+    /* ========= MAP → ALAMAT ========= */
+    async function reverseGeocode(lat, lng) {
+        statusEl.textContent = 'Mengambil alamat dari peta...';
 
-    async function reverseGeocode(lat, lon) {
-      try {
-        statusEl.textContent = 'Mengambil alamat dari titik peta...';
-
-        const url =
-          'https://nominatim.openstreetmap.org/reverse?format=jsonv2'
-          + '&lat=' + encodeURIComponent(lat)
-          + '&lon=' + encodeURIComponent(lon)
-          + '&addressdetails=1';
-
-        const res = await fetch(url, { headers: { 'Accept-Language': 'id' } });
-
-        if (!res.ok) {
-          statusEl.textContent = 'Tidak bisa mengambil alamat (HTTP ' + res.status + ').';
-          return;
-        }
+        const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+            { headers: { 'Accept-Language': 'id' } }
+        );
 
         const data = await res.json();
-
-        if (data && data.display_name) {
-          addressInput.value = data.display_name;
-          statusEl.textContent = 'Alamat berhasil diperbarui dari titik peta.';
-        } else {
-          statusEl.textContent = 'Alamat tidak ditemukan untuk titik ini.';
+        if (data.display_name) {
+            alamatInput.value = data.display_name;
+            statusEl.textContent = 'Alamat diperbarui dari peta';
         }
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = 'Gagal mengambil alamat dari titik peta.';
-      }
     }
 
-    async function geocodeAddress(query) {
-      if (!query || query.length < 5) {
-        statusEl.textContent = '';
-        return;
-      }
-
-      try {
-        statusEl.textContent = 'Mencari lokasi dari alamat...';
-
-        const url =
-          'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q='
-          + encodeURIComponent(query);
-
-        const res = await fetch(url, { headers: { 'Accept-Language': 'id' } });
-
-        if (!res.ok) {
-          statusEl.textContent = 'Gagal mencari alamat (HTTP ' + res.status + ').';
-          return;
-        }
-
-        const results = await res.json();
-
-        if (!results || results.length === 0) {
-          statusEl.textContent = 'Alamat tidak ditemukan. Coba lebih spesifik.';
-          return;
-        }
-
-        const place = results[0];
-        const lat   = parseFloat(place.lat);
-        const lon   = parseFloat(place.lon);
-
-        latInput.value = lat.toFixed(6);
-        lngInput.value = lon.toFixed(6);
-
-        const latLng = [lat, lon];
-
-        if (marker) marker.setLatLng(latLng);
-        else marker = L.marker(latLng).addTo(map);
-
-        map.setView(latLng, 16);
-        statusEl.textContent = 'Lokasi ditemukan dari alamat.';
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = 'Terjadi kesalahan saat mencari alamat.';
-      }
-    }
-
-    addressInput.addEventListener('input', function () {
-      const query = this.value.trim();
-      clearTimeout(geocodeTimeout);
-      geocodeTimeout = setTimeout(() => geocodeAddress(query), 700);
+    marker.on('dragend', function () {
+        const pos = marker.getLatLng();
+        latInput.value = pos.lat.toFixed(6);
+        lngInput.value = pos.lng.toFixed(6);
+        reverseGeocode(pos.lat, pos.lng);
     });
 
     map.on('click', function (e) {
-      const lat = e.latlng.lat;
-      const lon = e.latlng.lng;
+        marker.setLatLng(e.latlng);
+        latInput.value = e.latlng.lat.toFixed(6);
+        lngInput.value = e.latlng.lng.toFixed(6);
+        reverseGeocode(e.latlng.lat, e.latlng.lng);
+    });
 
-      latInput.value = lat.toFixed(6);
-      lngInput.value = lon.toFixed(6);
+    /* ========= ALAMAT → MAP ========= */
+    let typingTimer;
 
-      if (marker) marker.setLatLng(e.latlng);
-      else marker = L.marker(e.latlng).addTo(map);
+    alamatInput.addEventListener('input', function () {
+        clearTimeout(typingTimer);
 
-      map.setView(e.latlng, 16);
+        const query = this.value.trim();
+        if (query.length < 5) return;
 
-      addressInput.value = 'Lat: ' + lat.toFixed(6) + ', Lng: ' + lon.toFixed(6);
-      statusEl.textContent = 'Titik peta diperbarui, mengambil alamat...';
+        typingTimer = setTimeout(async () => {
+            statusEl.textContent = 'Mencari lokasi dari alamat...';
 
-      reverseGeocode(lat, lon);
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`,
+                { headers: { 'Accept-Language': 'id' } }
+            );
+
+            const data = await res.json();
+            if (!data.length) {
+                statusEl.textContent = 'Alamat tidak ditemukan';
+                return;
+            }
+
+            const lat = parseFloat(data[0].lat);
+            const lng = parseFloat(data[0].lon);
+
+            latInput.value = lat.toFixed(6);
+            lngInput.value = lng.toFixed(6);
+
+            marker.setLatLng([lat, lng]);
+            map.setView([lat, lng], 16);
+
+            statusEl.textContent = 'Lokasi ditemukan dari alamat';
+        }, 700);
     });
 
 });

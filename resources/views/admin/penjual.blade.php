@@ -13,26 +13,26 @@
 
     <div class="bg-white rounded-lg shadow border border-gray-100 overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 text-sm">
-            <thead class="bg-gray-50">
+            <thead class="bg-slate-800">
                 <tr>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th class="px-4 py-2 text-left text-xs font-medium text-white uppercase">
                         ID
                     </th>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th class="px-4 py-2 text-left text-xs font-medium text-white uppercase">
                         Nama Penjual
                     </th>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th class="px-4 py-2 text-left text-xs font-medium text-white uppercase">
                         Akun User
                     </th>
 
                     {{-- KOLOM BARU: DETAIL PERSYARATAN --}}
-                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th class="px-4 py-2 text-left text-xs font-medium text-white uppercase">
                         Persyaratan
                     </th>
-                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
+                    <th class="px-4 py-2 text-right text-xs font-medium text-white uppercase">
                         Status Seller
                     </th>
-                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
+                    <th class="px-4 py-2 text-right text-xs font-medium text-white uppercase">
                         Aksi
                     </th>
                 </tr>

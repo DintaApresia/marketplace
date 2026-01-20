@@ -12,7 +12,7 @@
 
     <div class="overflow-x-auto bg-white rounded shadow">
         <table class="min-w-full border border-gray-200 text-sm">
-            <thead class="bg-gray-100 text-gray-700">
+            <thead class="bg-slate-800 text-white">
                 <tr>
                     <th class="px-4 py-3 text-left border">No</th>
                     <th class="px-4 py-3 text-left border">Nama Toko</th>

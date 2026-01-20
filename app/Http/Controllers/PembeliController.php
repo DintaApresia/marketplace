@@ -25,21 +25,33 @@ class PembeliController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'name'          => 'required|string|max:255',
-            'receiver_name' => 'required|string|max:100',
-            'phone'         => 'required|string|max:25',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'receiver_name' => [
+                'required',
+                'string',
+                'max:100',
+            ],
+            'phone' => [
+                'required',
+                'string',
+                'regex:/^[0-9]{10,13}$/', // 🔒 hanya angka & panjang wajar
+            ],
         ]);
 
-        // ✅ Update NAMA USER
+        // ✅ Update nama user (jika berubah)
         if ($user->name !== $validated['name']) {
             $user->name = $validated['name'];
             $user->save();
         }
 
-        // ✅ Update / insert PEMBELI
+        // ✅ Update / insert data pembeli
         $pembeli = Pembeli::firstOrNew(['idUser' => $user->id]);
         $pembeli->nama_pembeli = $validated['receiver_name'];
-        $pembeli->no_telp      = $validated['phone'];
+        $pembeli->no_telp      = $validated['phone']; // tetap STRING
         $pembeli->save();
 
         return redirect()
@@ -68,7 +80,6 @@ class PembeliController extends Controller
 
         return redirect()->route('pembeli.profile')->with('success', 'Alamat berhasil disimpan.');
     }
-
 
     public function index()
     {
