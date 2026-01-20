@@ -1,21 +1,36 @@
-@extends('layouts.pembeli')
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Checkout</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-@section('title', 'Checkout')
+    {{-- Tailwind (ikut Vite / CDN sesuai setupmu) --}}
+    @vite(['resources/css/app.css','resources/js/app.js'])
+</head>
 
-@section('content')
+<body class="bg-gray-50 text-gray-900">
+
 <div class="max-w-6xl mx-auto p-4 space-y-6">
 
-    <h1 class="text-2xl font-semibold">Checkout</h1>
+    {{-- HEADER --}}
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-semibold">Checkout</h1>
+        <a href="{{ route('pembeli.keranjang') }}"
+           class="text-sm text-gray-600 hover:underline">
+            ← Kembali ke Keranjang
+        </a>
+    </div>
 
     {{-- Alert --}}
     @if (session('error'))
-        <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-red-700">
+        <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-red-700 text-sm">
             {{ session('error') }}
         </div>
     @endif
 
-   <form action="{{ route('pembeli.orders.simpan') }}" method="POST" enctype="multipart/form-data">
-    @csrf
+    <form action="{{ route('pembeli.orders.simpan') }}" method="POST" enctype="multipart/form-data">
+        @csrf
 
         <div class="grid md:grid-cols-2 gap-6">
 
@@ -49,10 +64,10 @@
                 <div>
                     <label class="text-sm font-medium">Catatan (opsional)</label>
                     <input type="text"
-                        name="catatan"
-                        class="mt-1 w-full rounded-lg border p-2"
-                        placeholder="Misal: taruh di pos satpam"
-                        value="{{ old('catatan') }}">
+                           name="catatan"
+                           class="mt-1 w-full rounded-lg border p-2"
+                           placeholder="Misal: taruh di pos satpam"
+                           value="{{ old('catatan') }}">
                 </div>
             </div>
 
@@ -64,11 +79,15 @@
                     @foreach ($cart as $item)
                         <div class="flex justify-between text-sm border-b pb-2">
                             <div>
+                                <div class="text-xs text-gray-500 mb-0.5">
+                                🏪 {{ $item['nama_penjual'] }}
+                                </div>
+
                                 <div class="font-medium">
                                     {{ $item['nama_barang'] ?? $item['nama'] ?? 'Produk' }}
                                 </div>
                                 <div class="text-gray-500">
-                                    {{ $item['qty'] }} x Rp{{ number_format($item['harga'], 0, ',', '.') }}
+                                    {{ $item['qty'] }} × Rp{{ number_format($item['harga'], 0, ',', '.') }}
                                 </div>
                             </div>
                             <div class="font-semibold">
@@ -78,7 +97,7 @@
                     @endforeach
                 </div>
 
-                {{-- ✅ Metode Pembayaran --}}
+                {{-- METODE PEMBAYARAN --}}
                 <div class="pt-2">
                     <label class="text-sm font-medium">Metode Pembayaran</label>
                     <select name="metode_pembayaran"
@@ -94,7 +113,7 @@
                     @enderror
                 </div>
 
-                {{-- 🔽 INFO TRANSFER --}}
+                {{-- INFO TRANSFER --}}
                 <div id="box-transfer" class="mt-3 p-3 border rounded-lg bg-gray-50 hidden">
                     <p class="text-sm font-semibold mb-1">Transfer ke Rekening:</p>
                     <p class="text-sm">
@@ -106,15 +125,16 @@
                     <div class="mt-3">
                         <label class="text-sm font-medium">Upload Bukti Pembayaran</label>
                         <input type="file"
-                            name="bukti_pembayaran"
-                            accept="image/*"
-                            class="mt-1 w-full rounded-lg border p-2">
+                               name="bukti_pembayaran"
+                               accept="image/*"
+                               class="mt-1 w-full rounded-lg border p-2">
                         @error('bukti_pembayaran')
                             <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
 
+                {{-- TOTAL --}}
                 <div class="border-t pt-3 space-y-1 text-sm">
                     <div class="flex justify-between">
                         <span>Subtotal</span>
@@ -135,11 +155,6 @@
                         class="w-full mt-4 rounded-lg bg-indigo-600 py-2 text-white font-semibold hover:bg-indigo-700">
                     Buat Pesanan
                 </button>
-
-                <a href="{{ route('pembeli.keranjang') }}"
-                class="block text-center text-sm text-gray-600 hover:underline mt-2">
-                    ← Kembali ke Keranjang
-                </a>
             </div>
 
         </div>
@@ -159,8 +174,8 @@
     }
 
     metodeSelect.addEventListener('change', toggleTransfer);
-
-    // jalankan saat reload (kalau validasi gagal)
     toggleTransfer();
 </script>
-@endsection
+
+</body>
+</html>

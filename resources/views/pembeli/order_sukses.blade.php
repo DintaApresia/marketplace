@@ -1,8 +1,16 @@
-@extends('layouts.pembeli')
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Pesanan Berhasil</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-@section('title', 'Pesanan Berhasil')
+    {{-- Tailwind --}}
+    @vite(['resources/css/app.css','resources/js/app.js'])
+</head>
 
-@section('content')
+<body class="bg-gray-50 text-gray-900">
+
 <div class="max-w-3xl mx-auto p-6">
 
     <div class="rounded-xl border bg-white p-6 text-center space-y-4">
@@ -63,7 +71,6 @@
             </div>
         </div>
 
-
         {{-- INFO TAMBAHAN --}}
         @if($order->metode_pembayaran === 'transfer')
             <p class="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
@@ -91,4 +98,6 @@
     </div>
 
 </div>
-@endsection
+
+</body>
+</html>

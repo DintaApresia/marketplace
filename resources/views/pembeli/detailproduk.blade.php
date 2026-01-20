@@ -1,7 +1,15 @@
-@extends('layouts.pembeli')
-@section('title', $produk->nama_barang)
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ $produk->nama_barang }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-@section('content')
+    @vite(['resources/css/app.css','resources/js/app.js'])
+</head>
+
+<body class="bg-gray-50 text-gray-900">
+
 {{-- TOAST SUCCESS --}}
 @if (session('success'))
     <div
@@ -26,12 +34,9 @@
 @endif
 
 @php
-    // URL asal (home / search / dll) dibawa dari ?back=
     $back = request('back');
-
-    // keamanan: hanya izinkan URL internal (biar ga bisa redirect ke luar)
     if (!$back || !str_starts_with($back, url('/'))) {
-        $back = route('pembeli.dashboard'); // fallback default
+        $back = route('pembeli.dashboard');
     }
 @endphp
 
@@ -88,75 +93,88 @@
             {{-- Toko --}}
             @if ($produk->penjual)
                 <div class="pt-4 mt-4 border-t space-y-2">
-            <h3 class="text-sm font-semibold text-gray-800">
-                Penjual
-            </h3>
+                    <h3 class="text-sm font-semibold text-gray-800">
+                        Penjual
+                    </h3>
 
-            <div class="flex items-start gap-2 text-sm text-gray-700">
-                {{-- Icon toko --}}
-                <svg class="w-4 h-4 mt-0.5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M3 7h18M5 7l1 12h12l1-12M9 7V5a3 3 0 016 0v2"/>
-                </svg>
-                <span class="font-medium">
-                    {{ $produk->penjual->nama_toko ?? 'Toko' }}
-                </span>
-            </div>
+                    <div class="flex items-start gap-2 text-sm text-gray-700">
+                        <svg class="w-4 h-4 mt-0.5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M3 7h18M5 7l1 12h12l1-12M9 7V5a3 3 0 016 0v2"/>
+                        </svg>
+                        <span class="font-medium">
+                            {{ $produk->penjual->nama_toko ?? 'Toko' }}
+                        </span>
+                    </div>
 
-            <div class="flex items-start gap-2 text-xs text-gray-500">
-                {{-- Icon lokasi --}}
-                <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" stroke-width="2"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M12 11c1.1 0 2-.9 2-2a2 2 0 10-4 0c0 1.1.9 2 2 2z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M12 22s8-4.5 8-11a8 8 0 10-16 0c0 6.5 8 11 8 11z"/>
-                </svg>
-                <span>{{ $produk->penjual->alamat_toko }}</span>
-            </div>
+                    <div class="flex items-start gap-2 text-xs text-gray-500">
+                        <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" stroke-width="2"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M12 11c1.1 0 2-.9 2-2a2 2 0 10-4 0c0 1.1.9 2 2 2z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M12 22s8-4.5 8-11a8 8 0 10-16 0c0 6.5 8 11 8 11z"/>
+                        </svg>
+                        <span>{{ $produk->penjual->alamat_toko }}</span>
+                    </div>
 
-            <div class="flex items-center gap-2 text-xs text-gray-500">
-                {{-- Icon telepon --}}
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M3 5a2 2 0 012-2h2l2 5-2 1a11 11 0 005 5l1-2 5 2v2a2 2 0 01-2 2A16 16 0 013 5z"/>
-                </svg>
-                <span>{{ $produk->penjual->no_telp }}</span>
-            </div>
-        </div>
+                    <div class="flex items-center gap-2 text-xs text-gray-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M3 5a2 2 0 012-2h2l2 5-2 1a11 11 0 005 5l1-2 5 2v2a2 2 0 01-2 2A16 16 0 013 5z"/>
+                        </svg>
+                        <span>{{ $produk->penjual->no_telp }}</span>
+                    </div>
+                </div>
             @endif
 
-            {{-- Aksi --}}
+            {{-- AKSI --}}
+            {{-- AKSI --}}
             <div class="pt-4 mt-auto flex gap-3">
+
                 {{-- Tambah ke Keranjang --}}
-                <form action="{{ route('pembeli.keranjang.tambah', $produk->id) }}" method="POST" class="flex-1">
+                <form id="form-keranjang"
+                    action="{{ route('pembeli.keranjang.tambah', $produk->id) }}"
+                    method="POST"
+                    class="flex-1">
                     @csrf
-                    <button
-                        type="submit"
-                        class="w-full bg-green-600 hover:bg-green-700 text-white text-sm py-2 rounded-md
-                            disabled:opacity-50 disabled:cursor-not-allowed"
-                        {{ $produk->stok <= 0 ? 'disabled' : '' }}>
+                    <button type="submit"
+                            class="w-full bg-green-600 hover:bg-green-700
+                                text-white text-sm py-2 rounded-md"
+                            {{ $produk->stok <= 0 ? 'disabled' : '' }}>
                         Tambah ke Keranjang
                     </button>
                 </form>
 
-                {{-- Checkout --}}
-                <a
-                    href="{{ $produk->stok > 0 ? route('pembeli.checkout') : '#' }}"
-                    class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 rounded-md
-                        {{ $produk->stok <= 0 ? 'opacity-50 pointer-events-none' : '' }}">
-                    Checkout
-                </a>
+                {{-- Beli Sekarang --}}
+                <form id="form-beli-langsung"
+                    action="{{ route('pembeli.checkout.langsung') }}"
+                    method="POST"
+                    class="flex-1">
+                    @csrf
+                    <input type="hidden" name="produk_id" value="{{ $produk->id }}">
+                    <input type="hidden" name="qty" value="1">
+
+                    <button type="button"
+                            onclick="document.getElementById('form-beli-langsung').submit()"
+                            class="w-full bg-blue-600 hover:bg-blue-700
+                                text-white text-sm py-2 rounded-md"
+                            {{ $produk->stok <= 0 ? 'disabled' : '' }}>
+                        Beli Sekarang
+                    </button>
+                </form>
+
             </div>
 
-
-            {{-- Back --}}
             <a href="{{ $back }}" class="text-xs sm:text-sm text-gray-500 hover:text-gray-700">
                 ← Kembali
             </a>
+
         </div>
     </div>
 </div>
-@endsection
+
+</body>
+</html>

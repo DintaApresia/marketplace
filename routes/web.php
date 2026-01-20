@@ -101,6 +101,7 @@ Route::middleware(['auth', 'role:pembeli'])
 
         // checkout page
         Route::get('/checkout', [OrderController::class, 'checkout']) ->name('checkout');
+        Route::post('/checkout/langsung', [OrderController::class, 'checkoutLangsung']) ->name('checkout.langsung');
 
         // simpan order
         Route::post('/orders/simpan', [OrderController::class, 'simpan']) ->name('orders.simpan');

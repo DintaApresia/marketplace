@@ -13,41 +13,39 @@ class KeranjangController extends Controller
 {
     public function index()
     {
-        $items = Keranjang::with('produk')
+        $items = Keranjang::with('produk.penjual')
             ->where('id_user', Auth::id())
             ->get();
 
-        $cart = $items->mapWithKeys(function ($k) {
+        $cart = $items->map(function ($k) {
             $p = $k->produk;
-            if (!$p) return [];
 
-            return [$p->id => [
-                'id'     => (int) $p->id,
-                'nama'   => $p->nama_barang,
-                'harga'  => (int) $p->harga,
-                'gambar' => $p->gambar,
-                'stok'   => (int) $p->stok,
-                'qty'    => (int) $k->jumlah,
-            ]];
+            return [
+                'id'         => $k->id_produk,              // ⬅️ ID PRODUK
+                'nama'       => $p->nama_barang,
+                'harga'      => (float) $p->harga,
+                'qty'        => (int) $k->jumlah,
+                'stok'       => (int) $p->stok,
+                'gambar'     => $p->gambar,
+                'penjual_id' => $p->penjual->id,
+                'nama_penjual' => $p->penjual->nama_toko ?? $p->penjual->nama_penjual,
+            ];
         })->toArray();
 
-        $total = collect($cart)->sum(fn($i) => $i['harga'] * $i['qty']);
-
-        // ✅ TAMBAHAN DI SINI
+        // cek profil pembeli
         $pembeli = Pembeli::where('idUser', Auth::id())->first();
 
-        $profilLengkap = $pembeli
-            && !empty($pembeli->nama_pembeli)
-            && !empty($pembeli->no_telp)
-            && !empty($pembeli->alamat);
+        $profilLengkap = $pembeli &&
+            $pembeli->nama_pembeli &&
+            $pembeli->no_telp &&
+            $pembeli->alamat;
 
         return view('pembeli.keranjang', compact(
             'cart',
-            'total',
-            'pembeli',
             'profilLengkap'
         ));
     }
+
 
     public function tambah(Request $request, Produk $produk)
     {

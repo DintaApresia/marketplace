@@ -48,11 +48,16 @@
       @foreach($cart as $item)
       <div class="bg-white border rounded-lg p-3 flex gap-3 items-center cart-item"
            data-id="{{ $item['id'] }}"
+           data-penjual="{{ $item['penjual_id'] }}"
            data-harga="{{ $item['harga'] }}"
            data-qty="{{ $item['qty'] }}"
            data-stok="{{ $item['stok'] }}">
 
-        <input type="checkbox" class="cart-check w-4 h-4 accent-green-600">
+        <input
+          type="checkbox"
+          name="items[]"
+          value="{{ $item['id'] }}"
+          class="cart-check w-4 h-4 accent-green-600">
 
         <div class="w-16 h-16 bg-gray-100 rounded overflow-hidden shrink-0">
           @if($item['gambar'])
@@ -61,9 +66,17 @@
           @endif
         </div>
 
-        <div class="flex-1">
-          <div class="text-sm font-medium">{{ $item['nama'] }}</div>
-          <div class="text-sm text-green-700 font-semibold">
+        <div class="flex-1 space-y-0.5">
+
+          <div class="text-sm text-gray-600 font-medium">
+            🏪 {{ $item['nama_penjual'] }}
+          </div>
+
+          <div class="text-sm font-medium text-gray-800">
+            {{ $item['nama'] }}
+          </div>
+
+          <div class="text-sm font-semibold text-green-700">
             Rp {{ number_format($item['harga'],0,',','.') }}
           </div>
 
@@ -75,7 +88,14 @@
             <div class="text-xs text-gray-500">
               Sisa stok: <span class="stok-text">{{ $item['stok'] }}</span>
             </div>
-
+        
+            {{-- 🔥 Hampir habis --}}
+            @if($item['stok'] < 5)
+              <div class="text-[11px] px-2 py-0.5 rounded-full
+                          bg-red-50 text-red-600 border border-red-200">
+                ⚠ Hampir habis
+              </div>
+            @endif
             <button type="button"
                     class="hapus-btn text-xs px-2 py-1 rounded border text-red-600"
                     data-id="{{ $item['id'] }}">
@@ -126,41 +146,161 @@
 {{-- JS --}}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const rupiah = n => 'Rp ' + (n||0).toLocaleString('id-ID');
-  const toast = (m, ok=false)=>alert(m);
 
+  /* =====================
+   * UTIL
+   * ===================== */
+  const rupiah = n => 'Rp ' + (n || 0).toLocaleString('id-ID');
+  const toast  = m => alert(m);
+
+  const selectedTotal = document.getElementById('selectedTotal');
+  const selectedCount = document.getElementById('selectedCount');
+  const form          = document.getElementById('form-checkout');
+
+  /* =====================
+   * HITUNG TOTAL TERPILIH
+   * ===================== */
   const hitungTotal = () => {
-    let total=0,count=0;
-    document.querySelectorAll('.cart-item').forEach(i=>{
-      if(i.querySelector('.cart-check').checked){
-        total += i.dataset.harga * i.dataset.qty;
+    let total = 0, count = 0;
+
+    document.querySelectorAll('.cart-item').forEach(item => {
+      const check = item.querySelector('.cart-check');
+      if (check.checked) {
+        total += Number(item.dataset.harga) * Number(item.dataset.qty);
         count++;
       }
     });
-    selectedTotal.textContent = rupiah(total);
-    selectedCount.textContent = count;
+
+    if (selectedTotal) selectedTotal.textContent = rupiah(total);
+    if (selectedCount) selectedCount.textContent = count;
   };
 
-  document.querySelectorAll('.cart-check').forEach(c=>{
-    c.onchange = hitungTotal;
+  /* =====================
+   * CHECKBOX CHECKOUT
+   * ===================== */
+  document.querySelectorAll('.cart-check').forEach(check => {
+    check.addEventListener('change', hitungTotal);
   });
 
-  document.getElementById('form-checkout').addEventListener('submit',e=>{
-    const profilLengkap = e.target.dataset.profilLengkap === '1';
-
-    if(!profilLengkap){
-      e.preventDefault();
-      toast('Lengkapi data profil terlebih dahulu.');
-      return;
-    }
-
-    if(!document.querySelector('.cart-check:checked')){
-      e.preventDefault();
-      toast('Pilih minimal 1 produk.');
-    }
+  /* =====================
+   * HAPUS ITEM
+   * ===================== */
+  document.querySelectorAll('.hapus-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      if (confirm('Hapus produk dari keranjang?')) {
+        const formHapus = document.getElementById(`hapus-${id}`);
+        if (formHapus) formHapus.submit();
+      }
+    });
   });
 
+  /* =====================
+   * VALIDASI SUBMIT
+   * ===================== */
+  if (form) {
+    form.addEventListener('submit', e => {
+      const profilLengkap = form.dataset.profilLengkap === '1';
+
+      if (!profilLengkap) {
+        e.preventDefault();
+        toast('Lengkapi data profil terlebih dahulu.');
+        return;
+      }
+
+      const checked = document.querySelectorAll('.cart-check:checked');
+      if (!checked.length) {
+        e.preventDefault();
+        toast('Pilih minimal 1 produk.');
+        return;
+      }
+
+      // VALIDASI 1 TOKO
+      const penjualSet = new Set();
+      checked.forEach(c => {
+        const item = c.closest('.cart-item');
+        penjualSet.add(item.dataset.penjual);
+      });
+
+      if (penjualSet.size > 1) {
+        e.preventDefault();
+        toast('Checkout hanya bisa dilakukan dari satu toko.');
+      }
+    });
+  }
+
+  /* =====================
+   * TOMBOL MINUS
+   * ===================== */
+  document.querySelectorAll('.qty-btn.minus').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item  = btn.closest('.cart-item');
+      const qtyEl = item.querySelector('.qty-text');
+      const qty   = Number(qtyEl.textContent.trim());
+      const id    = item.dataset.id;
+
+      // qty = 1 → konfirmasi hapus
+      if (qty === 1) {
+        if (confirm('Anda yakin akan menghapus produk ini dari keranjang?')) {
+          const formHapus = document.getElementById(`hapus-${id}`);
+          if (formHapus) formHapus.submit();
+        }
+        return;
+      }
+
+      // qty > 1 → kurangi
+      const newQty = qty - 1;
+      qtyEl.textContent = newQty;
+      item.dataset.qty  = newQty;
+
+      const harga = Number(item.dataset.harga);
+      const subtotalEl = item.querySelector('.item-subtotal');
+      if (subtotalEl) {
+        subtotalEl.textContent =
+          'Rp ' + (newQty * harga).toLocaleString('id-ID');
+      }
+
+      hitungTotal();
+    });
+  });
+
+  /* =====================
+   * TOMBOL PLUS
+   * ===================== */
+  document.querySelectorAll('.qty-btn.plus').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item  = btn.closest('.cart-item');
+      const qtyEl = item.querySelector('.qty-text');
+      const qty   = Number(qtyEl.textContent.trim());
+      const stok  = Number(item.dataset.stok);
+      const harga = Number(item.dataset.harga);
+
+      // qty >= stok → stop
+      if (qty >= stok) {
+        alert('Jumlah sudah mencapai stok maksimum.');
+        return;
+      }
+
+      // tambah qty
+      const newQty = qty + 1;
+      qtyEl.textContent = newQty;
+      item.dataset.qty  = newQty;
+
+      const subtotalEl = item.querySelector('.item-subtotal');
+      if (subtotalEl) {
+        subtotalEl.textContent =
+          'Rp ' + (newQty * harga).toLocaleString('id-ID');
+      }
+
+      hitungTotal();
+    });
+  });
+
+  // inisialisasi awal
   hitungTotal();
+
 });
 </script>
+
+
 @endsection
