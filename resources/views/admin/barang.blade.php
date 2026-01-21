@@ -12,16 +12,13 @@
 
             {{-- TOMBOL KEMBALI --}}
             <a href="{{ route('admin.toko.show') }}"
-            class="inline-block mt-2 text-xs sm:text-sm text-gray-500 hover:text-gray-700">
+               class="inline-block mt-2 text-xs sm:text-sm text-gray-500 hover:text-gray-700">
                 ← Kembali ke halaman toko
             </a>
         </div>
 
         {{-- SEARCH --}}
-        <form method="GET" action="{{ route('admin.toko.barang', $user) }}" class="flex gap-2">
-            @if(!empty($userId))
-                <input type="hidden" name="user_id" value="{{ $userId }}">
-            @endif
+        <form method="GET" action="{{ route('admin.toko.barang', $penjualId) }}" class="flex gap-2">
 
             <input
                 type="text"
@@ -30,6 +27,7 @@
                 placeholder="Cari nama / deskripsi..."
                 class="w-64 rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-green-600 focus:outline-none"
             />
+
             <button class="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
                 Cari
             </button>
@@ -45,6 +43,7 @@
     @endif
 
     <div class="bg-white rounded-lg shadow border border-gray-100 overflow-hidden">
+
         <div class="px-5 py-4 border-b flex items-center justify-between">
             <p class="text-sm text-gray-600">
                 Total data: <span class="font-semibold">{{ $barangs->total() }}</span>
@@ -63,9 +62,9 @@
                         <th class="px-4 py-3 text-left">Stok</th>
                         <th class="px-4 py-3 text-left">Status</th>
                         <th class="px-4 py-3 text-left">Dibuat</th>
-                        <!-- <th class="px-4 py-3 text-right">Aksi</th> -->
                     </tr>
                 </thead>
+
                 <tbody class="divide-y">
                     @forelse ($barangs as $i => $b)
                         <tr class="hover:bg-gray-50">
@@ -78,10 +77,10 @@
                             {{-- Pengguna --}}
                             <td class="px-4 py-3">
                                 <div class="font-medium text-gray-800">
-                                    {{ $b->user->name ?? '-' }}
+                                    {{ $b->penjual->user->name ?? '-' }}
                                 </div>
                                 <div class="text-xs text-gray-500">
-                                    ID: {{ $b->user_id }}
+                                    Toko: {{ $b->penjual->nama_toko ?? '-' }}
                                 </div>
                             </td>
 
@@ -120,7 +119,7 @@
                                 {{ (int) $b->stok }}
                             </td>
 
-                           {{-- Status --}}
+                            {{-- Status --}}
                             <td class="px-4 py-3">
                                 @if ($b->stok <= 0)
                                     <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
@@ -137,45 +136,20 @@
                                 @endif
                             </td>
 
-
                             {{-- Dibuat --}}
                             <td class="px-4 py-3 text-gray-600">
                                 {{ optional($b->created_at)->format('d M Y') }}
                             </td>
 
-                            {{-- Aksi --}}
-                            <!-- <td class="px-4 py-3 text-right">
-                                <div class="flex justify-end gap-2">
-                                    <a href="{{ route('admin.barang.edit', $b->id) }}"
-                                    class="px-3 py-1.5 rounded-md border text-xs hover:bg-gray-50">
-                                        Edit
-                                    </a>
-
-
-                                    <form action="{{ route('admin.produk.hapus', $b->id) }}"
-                                        method="POST"
-                                        onsubmit="return confirm('Yakin ingin menghapus produk ini?')">
-                                        @csrf
-                                        @method('DELETE')
-
-                                        <button type="submit"
-                                            class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700">
-                                            Hapus
-                                        </button>
-                                    </form>
-                                </div>
-                            </td> -->
-
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-4 py-10 text-center text-gray-500">
+                            <td colspan="8" class="px-4 py-10 text-center text-gray-500">
                                 Data barang belum ada.
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
-
 
             </table>
         </div>
@@ -184,6 +158,7 @@
         <div class="px-5 py-4 border-t">
             {{ $barangs->appends(request()->query())->links() }}
         </div>
+
     </div>
 </div>
 @endsection

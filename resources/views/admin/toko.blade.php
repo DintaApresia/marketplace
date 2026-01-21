@@ -53,7 +53,7 @@
                         <td class="px-4 py-2 border text-center space-x-2">
                             <a href="{{ route('admin.toko.barang', $item->id) }}"
                             class="inline-block px-3 py-1.5 rounded-md bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 transition">
-                                Lihat Barang
+                                Lihat Produk
                             </a>
 
                             <!-- <a href="{{ route('admin.toko.barang', $item->id) }}"

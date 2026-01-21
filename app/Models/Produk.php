@@ -52,7 +52,7 @@ class Produk extends Model
 
     public function penjual()
     {
-        return $this->hasOne(Penjual::class, 'user_id', 'user_id');
+        return $this->belongsTo(Penjual::class, 'penjual_id');
     }
 
     public function ratings()

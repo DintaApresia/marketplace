@@ -136,12 +136,12 @@ class AdminController extends Controller
         return back()->with('success', 'User berhasil dihapus.');
     }
 
-    public function barangIndex(Request $request, $user)
+    public function barangIndex(Request $request, $penjualId)
     {
         $q = $request->get('q');
 
-        $barangs = Produk::with('user')
-            ->where('user_id', $user) // ✅ INI KUNCINYA
+        $barangs = Produk::with(['penjual.user'])
+            ->where('penjual_id', $penjualId) // ✅ KUNCI YANG BENAR
             ->when($q, function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
                     $sub->where('nama_barang', 'like', "%{$q}%")
@@ -152,10 +152,9 @@ class AdminController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('admin.barang', compact('barangs', 'q', 'user'));
+        return view('admin.barang', compact('barangs', 'q', 'penjualId'));
     }
 
-   
     public function barangEdit(Produk $produk)
     {
         $user = $produk->user_id;

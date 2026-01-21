@@ -178,36 +178,38 @@ class PenjualController extends Controller
     }
 
     
-  
     public function dashboard()
     {
-        $sellerId = Auth::id();
+        $penjualId = Auth::user()->penjual->id;
 
-        // TOTAL PRODUK
-        $totalProduk = Produk::where('user_id', $sellerId)->count();
+        $totalProduk = Produk::where('penjual_id', $penjualId)->count();
 
-        // ✅ Jika tidak ada is_active, pakai stok (aktifkan ini & comment 2 baris di atas):
-        $produkAktif = Produk::where('user_id', $sellerId)->where('stok', '>', 0)->count();
-        $produkNonaktif = Produk::where('user_id', $sellerId)->where('stok', '=', 0)->count();
-        
-        // STATUS PESANAN (khusus order yang punya item produk seller)
+        $produkAktif = Produk::where('penjual_id', $penjualId)
+            ->where('stok', '>', 0)->count();
+
+        $produkNonaktif = Produk::where('penjual_id', $penjualId)
+            ->where('stok', '=', 0)->count();
+
         $pesananDikemas = Order::where('status_pesanan', 'dikemas')
-            ->whereHas('items.produk', fn($q) => $q->where('user_id', $sellerId))
-            ->count();
+            ->whereHas('items.produk', fn ($q) =>
+                $q->where('penjual_id', $penjualId)
+            )->count();
 
         $pesananDikirim = Order::where('status_pesanan', 'dikirim')
-            ->whereHas('items.produk', fn($q) => $q->where('user_id', $sellerId))
-            ->count();
+            ->whereHas('items.produk', fn ($q) =>
+                $q->where('penjual_id', $penjualId)
+            )->count();
 
         $pesananSelesai = Order::where('status_pesanan', 'selesai')
-            ->whereHas('items.produk', fn($q) => $q->where('user_id', $sellerId))
-            ->count();
+            ->whereHas('items.produk', fn ($q) =>
+                $q->where('penjual_id', $penjualId)
+            )->count();
 
         $pesananDitolak = Order::where('status_pesanan', 'ditolak')
-            ->whereHas('items.produk', fn($q) => $q->where('user_id', $sellerId))
-            ->count();
+            ->whereHas('items.produk', fn ($q) =>
+                $q->where('penjual_id', $penjualId)
+            )->count();
 
-        // Total pesanan masuk = semua status di atas (biar konsisten)
         $pesananMasuk = $pesananDikemas + $pesananDikirim + $pesananSelesai + $pesananDitolak;
 
         return view('penjual.dashboard', compact(
@@ -222,9 +224,12 @@ class PenjualController extends Controller
         ));
     }
 
+    // ===========================
+    // ✅ LAPORAN (FIX FINAL)
+    // ===========================
     private function getLaporanData(Request $request)
     {
-        $sellerId = Auth::id();
+        $penjualId = Auth::user()->penjual->id;
 
         $startDate = $request->tanggal_mulai
             ? Carbon::parse($request->tanggal_mulai)->startOfDay()
@@ -234,12 +239,14 @@ class PenjualController extends Controller
             ? Carbon::parse($request->tanggal_selesai)->endOfDay()
             : now()->endOfMonth();
 
-        $totalProduk = Produk::where('user_id', $sellerId)->count();
-        $produkAktif = Produk::where('user_id', $sellerId)->where('is_active', 1)->count();
-        $produkNonaktif = Produk::where('user_id', $sellerId)->where('is_active', 0)->count();
+        $totalProduk = Produk::where('penjual_id', $penjualId)->count();
+        $produkAktif = Produk::where('penjual_id', $penjualId)->where('is_active', 1)->count();
+        $produkNonaktif = Produk::where('penjual_id', $penjualId)->where('is_active', 0)->count();
 
         $baseOrderQuery = Order::whereBetween('created_at', [$startDate, $endDate])
-            ->whereHas('items.produk', fn ($q) => $q->where('user_id', $sellerId));
+            ->whereHas('items.produk', fn ($q) =>
+                $q->where('penjual_id', $penjualId)
+            );
 
         $pesananDikemas = (clone $baseOrderQuery)->where('status_pesanan', 'dikemas')->count();
         $pesananDikirim = (clone $baseOrderQuery)->where('status_pesanan', 'dikirim')->count();
@@ -252,24 +259,22 @@ class PenjualController extends Controller
             ->where('status_pesanan', 'selesai')
             ->sum('total_bayar');
 
-        /* 🔥 RINCIAN PRODUK TERJUAL — TABEL `produk` */
         $produkTerjual = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->join('produk', 'order_items.produk_id', '=', 'produk.id')
             ->join('users', 'orders.user_id', '=', 'users.id')
-            ->where('produk.user_id', $sellerId)
+            ->where('produk.penjual_id', $penjualId)
             ->whereBetween('orders.created_at', [$startDate, $endDate])
             ->select(
                 'produk.nama_barang',
                 'order_items.jumlah',
                 'order_items.subtotal_item',
                 'users.name as nama_pembeli',
-                'orders.status_pesanan', // ✅ TAMBAH
+                'orders.status_pesanan',
                 'orders.created_at as tanggal_pembelian'
             )
             ->orderBy('orders.created_at', 'desc')
             ->get();
-
 
         $totalSubtotal = $produkTerjual->sum('subtotal_item');
 
