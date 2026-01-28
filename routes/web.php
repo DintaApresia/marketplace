@@ -136,33 +136,68 @@ Route::middleware(['auth', 'role:pembeli'])
 | Area Penjual
 |--------------------------------------------------------------------------
 */
+
+/**
+ * =========================================================
+ * PENDAFTARAN PENJUAL
+ * (User login, BELUM role penjual)
+ * =========================================================
+ */
 Route::middleware('auth')
     ->prefix('penjual')
     ->name('penjual.')
     ->group(function () {
 
-        // Daftar penjual (untuk user yang belum role penjual juga boleh)
         Route::get('/daftar',  [PenjualController::class, 'showDaftar'])->name('daftar');
         Route::post('/daftar', [PenjualController::class, 'submitDaftar'])->name('daftar.submit');
 
-        // (kalau ini memang halaman pengajuan, biasanya beda method/view)
-        Route::get('/pengajuan-saya', [PenjualController::class, 'showDaftar'])->name('pengajuan-saya');
-
-        // Khusus yang sudah role:penjual
-        Route::middleware('role:penjual')->group(function () {
-            Route::get('/dashboard', [PenjualController::class, 'dashboard'])->name('dashboard');
-            Route::get('/download/laporan', [PenjualController::class, 'downloadLaporan'])->name('download.laporan');
-            Route::get('/laporan', [PenjualController::class, 'laporan'])->name('laporan');
-
-            Route::get('/profile', [PenjualController::class, 'profile'])->name('profile');
-            Route::patch('/profile', [PenjualController::class, 'updateProfile'])->name('profile.update');
-            Route::get('/pesanan-masuk', [OrderMasukController::class, 'index'])->name('orders.masuk');
-
-            Route::get('/pesanan-masuk/{order}', [OrderMasukController::class, 'show'])->name('orders.masuk.show');
-
-            // Opsional: ubah status (accept/proses/kirim/selesai)
-            Route::patch('/pesanan-masuk/{order}/status',[OrderMasukController::class, 'updateStatus'])->name('orders.masuk.status');});
+        Route::get('/pengajuan-saya', [PenjualController::class, 'showDaftar'])
+            ->name('pengajuan-saya');
     });
+
+/**
+ * =========================================================
+ * AREA KHUSUS PENJUAL (SUDAH ROLE:penjual)
+ * =========================================================
+ */
+Route::middleware(['auth', 'role:penjual'])
+    ->prefix('penjual')
+    ->name('penjual.')
+    ->group(function () {
+
+        /* ================= DASHBOARD ================= */
+        Route::get('/dashboard', [PenjualController::class, 'dashboard'])->name('dashboard');
+
+        /* ================= PROFILE ================= */
+        Route::get('/profile', [PenjualController::class, 'profile'])->name('profile');
+        Route::patch('/profile', [PenjualController::class, 'updateProfile'])->name('profile.update');
+
+        /* ================= PRODUK (MANAGEMENT) ================= */
+        Route::prefix('produk')
+            ->name('produk.')
+            ->group(function () {
+
+                Route::get('/', [ProdukController::class, 'index'])->name('index');
+                Route::post('/', [ProdukController::class, 'store'])->name('store');
+
+                Route::put('/{produk}', [ProdukController::class, 'update'])->name('update');
+                Route::delete('/{produk}', [ProdukController::class, 'destroy'])->name('destroy');
+
+                Route::post('/{produk}/tambah-stok',
+                    [ProdukController::class, 'tambahStok']
+                )->name('tambahStok');
+            });
+
+        /* ================= PESANAN MASUK ================= */
+        Route::get('/pesanan-masuk', [OrderMasukController::class, 'index'])->name('orders.masuk');
+        Route::get('/pesanan-masuk/{order}', [OrderMasukController::class, 'show'])->name('orders.masuk.show');
+        Route::patch('/pesanan-masuk/{order}/status',[OrderMasukController::class, 'updateStatus'] )->name('orders.masuk.status');
+
+        /* ================= LAPORAN ================= */
+        Route::get('/laporan', [PenjualController::class, 'laporan'])->name('laporan');
+        Route::get('/download/laporan', [PenjualController::class, 'downloadLaporan'])->name('download.laporan');
+    });
+
 
 /*
 |--------------------------------------------------------------------------
@@ -198,11 +233,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 | Produk (umum, butuh login)
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth')->group(function () {
-    Route::get('/produk', [ProdukController::class, 'index'])->name('produk.index');
-    Route::post('/produk', [ProdukController::class, 'store'])->name('produk.store');
-    Route::put('/produk/{produk}', [ProdukController::class, 'update'])->name('produk.update');
-    Route::delete('/produk/{produk}', [ProdukController::class, 'destroy'])->name('produk.destroy');
-    Route::post('/produk/{produk}/tambah-stok', [ProdukController::class, 'tambahStok'])->name('produk.tambahStok');
+// Route::middleware('auth')->group(function () {
+//     Route::get('/produk', [ProdukController::class, 'index'])->name('produk.index');
+//     Route::post('/produk', [ProdukController::class, 'store'])->name('produk.store');
+//     Route::put('/produk/{produk}', [ProdukController::class, 'update'])->name('produk.update');
+//     Route::delete('/produk/{produk}', [ProdukController::class, 'destroy'])->name('produk.destroy');
+//     Route::post('/produk/{produk}/tambah-stok', [ProdukController::class, 'tambahStok'])->name('produk.tambahStok');
 
-});
+// });

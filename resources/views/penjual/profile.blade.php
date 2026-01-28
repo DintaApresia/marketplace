@@ -1,4 +1,5 @@
 @extends('layouts.penjual')
+@section('title', 'Profile')
 @section('content')
 <div class="bg-white rounded-lg shadow border border-gray-100 p-6">
 
@@ -71,10 +72,14 @@
       <div>
         <label class="block text-sm font-medium text-gray-700">No. Telepon</label>
         <input
+          type="tel"
           name="no_telp"
+          inputmode="numeric"
+          pattern="[0-9]*"
           class="mt-1 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-green-600"
           placeholder="08xxxxxxxxxx"
           value="{{ old('no_telp', $penjual->no_telp ?? '') }}"
+          oninput="this.value = this.value.replace(/[^0-9]/g, '')"
         >
       </div>
 

@@ -62,7 +62,7 @@ class PencarianController extends Controller
          * join ke tabel penjuals (bukan penjual)
          */
         $products = $base
-            ->join('penjuals as pj', 'pj.user_id', '=', 'produk.user_id')
+            ->join('penjuals as pj', 'pj.id', '=', 'produk.penjual_id')
             ->whereNotNull('pj.latitude')
             ->whereNotNull('pj.longitude')
             ->whereBetween('pj.latitude',  [$buyerLat - $latDelta, $buyerLat + $latDelta])

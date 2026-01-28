@@ -93,12 +93,9 @@ class PembeliController extends Controller
 
     public function detailProduk($id)
     {
-         $produk = Produk::with(['user.penjual'])->findOrFail($id);
+        $produk = Produk::with('penjual')->findOrFail($id);
 
-        // Ambil data penjual dari relasi user → penjual
-        $penjual = $produk->user->penjual;
-
-        return view('pembeli.detailproduk', compact('produk', 'penjual'));
+        return view('pembeli.detailproduk', compact('produk'));
     }
 
     public function hasilPencarian(Request $request)

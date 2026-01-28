@@ -11,22 +11,16 @@ class OrderMasukController extends Controller
 {
     public function index(Request $request)
     {
-        $sellerId = Auth::id(); // atau Auth::user()->penjual->id
+        $penjualId = auth()->user()->penjual->id;
 
-        // Query utama daftar pesanan
-        $q = Order::query()
-            ->with([
-                'user',
-                'items.produk',
-            ])
-            ->whereHas('items.produk', function ($p) use ($sellerId) {
-                $p->where('user_id', $sellerId);
+        $q = Order::with(['user', 'items.produk'])
+            ->whereHas('items.produk', function ($p) use ($penjualId) {
+                $p->where('penjual_id', $penjualId);
             })
             ->latest();
 
-        // Filter status (opsional)
         if ($request->filled('status')) {
-            $q->where('status', $request->status);
+            $q->where('status_pesanan', $request->status);
         }
 
         $orders = $q->paginate(10)->withQueryString();
@@ -34,26 +28,38 @@ class OrderMasukController extends Controller
         return view('penjual.pesanan', compact('orders'));
     }
 
+
     public function show(Order $order)
     {
-        $sellerId = auth()->id();
+        $penjualId = auth()->user()->penjual->id;
 
         abort_unless(
-            $order->items()->whereHas('produk', fn($p) => $p->where('user_id', $sellerId))->exists(),
+            $order->items()
+                ->whereHas('produk', fn ($p) => $p->where('penjual_id', $penjualId))
+                ->exists(),
             403
         );
 
         $order->load(['user', 'items.produk', 'items.produk.ratings']);
 
-        $itemsSeller = $order->items->filter(fn($it) => optional($it->produk)->user_id == $sellerId);
+        $itemsSeller = $order->items
+            ->filter(fn ($it) => optional($it->produk)->penjual_id === $penjualId);
 
         return view('penjual.order_show', compact('order', 'itemsSeller'));
     }
 
-
     // OPSIONAL: ubah status
     public function updateStatus(Request $request, Order $order)
     {
+        $penjualId = auth()->user()->penjual->id;
+
+        abort_unless(
+            $order->items()
+                ->whereHas('produk', fn ($p) => $p->where('penjual_id', $penjualId))
+                ->exists(),
+            403
+        );
+
         $data = $request->validate([
             'status' => 'required|in:menunggu,dikemas,dikirim,selesai,ditolak',
         ]);
@@ -63,5 +69,6 @@ class OrderMasukController extends Controller
 
         return back()->with('success', 'Status pesanan diperbarui.');
     }
+
 
 }

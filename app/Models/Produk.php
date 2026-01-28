@@ -14,6 +14,7 @@ class Produk extends Model
 
     protected $fillable = [
         'user_id',
+        'penjual_id',
         'nama_barang',
         'deskripsi',
         'harga',
@@ -29,17 +30,12 @@ class Produk extends Model
 
     protected static function boot()
     {
-        parent :: boot();
-        
-        static::saving(function ($product) {
+        parent::boot();
 
-            // 🔴 Jika stok 0 → otomatis nonaktif
+        static::saving(function ($product) {
             if ($product->stok <= 0) {
                 $product->is_active = 0;
-            }
-
-            // 🟢 (opsional) Jika stok > 0 → aktif kembali
-            if ($product->stok > 0 && $product->is_active === null) {
+            } else {
                 $product->is_active = 1;
             }
         });

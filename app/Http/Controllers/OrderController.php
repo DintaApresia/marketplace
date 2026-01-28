@@ -19,9 +19,7 @@ class OrderController extends Controller
     {
         $orders = Order::query()
             ->where('user_id', Auth::id()) // kalau kolommu id_user, ganti jadi ->where('id_user', Auth::id())
-            ->with([
-                'items.produk.penjual', // sesuaikan relasi penjual
-            ])
+            ->whereHas('items.produk')
             ->orderByDesc('created_at')
             ->paginate(10);
 
@@ -225,8 +223,8 @@ class OrderController extends Controller
     {
         $request->validate([
             'metode_pembayaran' => 'required|in:cod,transfer',
-            'catatan' => 'nullable|string|max:500',
-            'bukti_pembayaran' => [
+            'catatan'           => 'nullable|string|max:500',
+            'bukti_pembayaran'  => [
                 'required_if:metode_pembayaran,transfer',
                 'image','mimes:jpg,jpeg,png,webp','max:2048'
             ],
@@ -237,82 +235,164 @@ class OrderController extends Controller
             return redirect()->route('pembeli.profile');
         }
 
-        $order = DB::transaction(function () use ($request, $pembeli) {
+        try {
+            $order = DB::transaction(function () use ($request, $pembeli) {
 
-            // AMBIL ITEM DARI KERANJANG (SETELAH CHECKOUT)
-            $items = Keranjang::with('produk')
-                ->where('id_user', Auth::id())
-                ->get();
+                /**
+                 * =================================================
+                 * AMBIL ITEM (KERANJANG / CHECKOUT LANGSUNG)
+                 * =================================================
+                 */
+                $items = collect();
 
-            if ($items->isEmpty()) {
-                throw new \Exception('Keranjang kosong.');
-            }
+                // MODE CHECKOUT LANGSUNG
+                if (session()->has('checkout_langsung')) {
 
-            $subtotal = 0;
+                    $data = session('checkout_langsung');
+                    session()->forget('checkout_langsung');
 
-            foreach ($items as $k) {
-                if ($k->produk->stok < $k->jumlah) {
-                    throw new \Exception('Stok tidak mencukupi.');
+                    $produk = Produk::with('penjual')->lockForUpdate()->findOrFail($data['produk_id']);
+                    $qty    = (int) ($data['qty'] ?? 1);
+
+                    if (!$produk->is_active || $produk->stok < $qty) {
+                        throw new \Exception('Produk tidak tersedia atau stok tidak mencukupi.');
+                    }
+
+                    $items->push((object)[
+                        'produk' => $produk,
+                        'jumlah' => $qty,
+                    ]);
                 }
-                $subtotal += $k->produk->harga * $k->jumlah;
-            }
+                // MODE CHECKOUT DARI KERANJANG
+                else {
 
-            $penjual = $items->first()->produk->penjual;
+                    $keranjang = Keranjang::with('produk.penjual')
+                        ->where('id_user', Auth::id())
+                        ->lockForUpdate()
+                        ->get();
 
-            $ongkir = $this->hitungOngkir(
-                $penjual->latitude ?? null,
-                $penjual->longitude ?? null,
-                $pembeli->latitude ?? null,
-                $pembeli->longitude ?? null
-            );
+                    if ($keranjang->isEmpty()) {
+                        throw new \Exception('Keranjang kosong.');
+                    }
 
-            $total = $subtotal + $ongkir;
+                    foreach ($keranjang as $k) {
+                        if (
+                            !$k->produk ||
+                            !$k->produk->is_active ||
+                            $k->produk->stok < $k->jumlah
+                        ) {
+                            throw new \Exception('Stok tidak mencukupi atau produk tidak tersedia.');
+                        }
 
-            $buktiPath = null;
-            if ($request->metode_pembayaran === 'transfer' && $request->hasFile('bukti_pembayaran')) {
-                $buktiPath = $request->file('bukti_pembayaran')
-                    ->store('bukti_pembayaran', 'public');
-            }
+                        $items->push((object)[
+                            'produk' => $k->produk,
+                            'jumlah' => $k->jumlah,
+                        ]);
+                    }
+                }
 
-            $order = Order::create([
-                'user_id'           => Auth::id(),
-                'nama_penerima'     => $pembeli->nama_pembeli,
-                'no_hp'             => $pembeli->no_telp,
-                'alamat_pengiriman' => $pembeli->alamat,
-                'subtotal'          => $subtotal,
-                'ongkir'            => $ongkir,
-                'total_bayar'       => $total,
-                'status_pesanan'    => 'menunggu',
-                'metode_pembayaran' => $request->metode_pembayaran,
-                'status_pembayaran' => $request->metode_pembayaran === 'transfer'
-                                        ? 'menunggu_verifikasi'
-                                        : 'belum_bayar',
-                'bukti_pembayaran'  => $buktiPath,
-                'catatan'           => $request->catatan,
-            ]);
+                /**
+                 * =================================================
+                 * VALIDASI SATU PENJUAL
+                 * =================================================
+                 */
+                $penjualIds = $items->pluck('produk.penjual_id')->unique();
+                if ($penjualIds->count() !== 1) {
+                    throw new \Exception('Checkout hanya dapat dilakukan dari satu penjual.');
+                }
 
-            foreach ($items as $k) {
-                OrderItem::create([
-                    'order_id'     => $order->id,
-                    'produk_id'    => $k->produk->id,
-                    'nama_barang'  => $k->produk->nama_barang,
-                    'harga_satuan' => $k->produk->harga,
-                    'jumlah'       => $k->jumlah,
-                    'subtotal_item'=> $k->produk->harga * $k->jumlah,
+                $penjual = $items->first()->produk->penjual;
+
+                /**
+                 * =================================================
+                 * HITUNG SUBTOTAL, ONGKIR, TOTAL
+                 * =================================================
+                 */
+                $subtotal = 0;
+                foreach ($items as $it) {
+                    $subtotal += $it->produk->harga * $it->jumlah;
+                }
+
+                $ongkir = $this->hitungOngkir(
+                    $penjual->latitude ?? null,
+                    $penjual->longitude ?? null,
+                    $pembeli->latitude ?? null,
+                    $pembeli->longitude ?? null
+                );
+
+                $total = $subtotal + $ongkir;
+
+                /**
+                 * =================================================
+                 * UPLOAD BUKTI PEMBAYARAN (JIKA ADA)
+                 * =================================================
+                 */
+                $buktiPath = null;
+                if (
+                    $request->metode_pembayaran === 'transfer' &&
+                    $request->hasFile('bukti_pembayaran')
+                ) {
+                    $buktiPath = $request->file('bukti_pembayaran')
+                        ->store('bukti_pembayaran', 'public');
+                }
+
+                /**
+                 * =================================================
+                 * SIMPAN ORDER
+                 * =================================================
+                 */
+                $order = Order::create([
+                    'user_id'           => Auth::id(),
+                    'nama_penerima'     => $pembeli->nama_pembeli,
+                    'no_hp'             => $pembeli->no_telp,
+                    'alamat_pengiriman' => $pembeli->alamat,
+                    'subtotal'          => $subtotal,
+                    'ongkir'            => $ongkir,
+                    'total_bayar'       => $total,
+                    'status_pesanan'    => 'menunggu',
+                    'metode_pembayaran' => $request->metode_pembayaran,
+                    'status_pembayaran' => $request->metode_pembayaran === 'transfer'
+                                            ? 'menunggu_verifikasi'
+                                            : 'belum_bayar',
+                    'bukti_pembayaran'  => $buktiPath,
+                    'catatan'           => $request->catatan,
                 ]);
 
-                $k->produk->decrement('stok', $k->jumlah);
-            }
+                /**
+                 * =================================================
+                 * SIMPAN ITEM + KURANGI STOK
+                 * =================================================
+                 */
+                foreach ($items as $it) {
 
-            Keranjang::where('id_user', Auth::id())->delete();
+                    OrderItem::create([
+                        'order_id'      => $order->id,
+                        'produk_id'     => $it->produk->id,
+                        'nama_barang'   => $it->produk->nama_barang,
+                        'harga_satuan'  => $it->produk->harga,
+                        'jumlah'        => $it->jumlah,
+                        'subtotal_item' => $it->produk->harga * $it->jumlah,
+                    ]);
 
-            return $order;
-        });
+                    $it->produk->decrement('stok', $it->jumlah);
+                }
 
-        return redirect()
-            ->route('pembeli.orders.sukses', $order->id)
-            ->with('success', 'Pesanan berhasil dibuat.');
+                // Bersihkan keranjang jika mode keranjang
+                Keranjang::where('id_user', Auth::id())->delete();
+
+                return $order;
+            });
+
+            return redirect()
+                ->route('pembeli.orders.sukses', $order->id)
+                ->with('success', 'Pesanan berhasil dibuat.');
+
+        } catch (\Throwable $e) {
+
+            return back()->with('error', $e->getMessage());
+        }
     }
+
 
     /**
      * GET /order/{orderId}/sukses

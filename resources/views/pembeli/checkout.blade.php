@@ -117,10 +117,14 @@
                 <div id="box-transfer" class="mt-3 p-3 border rounded-lg bg-gray-50 hidden">
                     <p class="text-sm font-semibold mb-1">Transfer ke Rekening:</p>
                     <p class="text-sm">
-                        <span class="font-medium">{{ $penjual->nama_bank }}</span><br>
-                        No. Rekening: <span class="font-semibold">{{ $penjual->rekening }}</span><br>
-                        A/N: {{ $penjual->nama_rekening }}
+                        <span class="font-medium">
+                            {{ $penjual->nama_bank ?? '-' }}
+                        </span><br>
+                        No. Rekening:
+                        <span class="font-semibold">{{ $penjual->rekening ?? '-' }}</span><br>
+                        A/N: {{ $penjual->nama_rekening ?? '-' }}
                     </p>
+
 
                     <div class="mt-3">
                         <label class="text-sm font-medium">Upload Bukti Pembayaran</label>

@@ -11,14 +11,17 @@ use Illuminate\Support\Facades\Storage;
 class ProdukController extends Controller
 {
     public function index(Request $request)
-   {
-    $produks = Produk::with(['user.penjual']) // eager load user & penjual
-        ->where('user_id', auth()->id())
-        ->latest()
-        ->paginate(10);
+    {
+        $penjualId = auth()->user()->penjual->id;
 
-    return view('penjual.produk', compact('produks'));
+        $produks = Produk::with(['penjual'])
+            ->where('penjual_id', $penjualId)
+            ->latest()
+            ->paginate(10);
+
+        return view('penjual.produk', compact('produks'));
     }
+
 
     /**
      * Form tambah produk.
@@ -41,7 +44,8 @@ class ProdukController extends Controller
             'gambar'      => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $data['user_id'] = auth()->id();
+        $data['user_id']    = auth()->id(); // opsional
+        $data['penjual_id'] = auth()->user()->penjual->id;
 
         if ($request->hasFile('gambar')) {
             $data['gambar'] = $request->file('gambar')->store('produk', 'public');
@@ -49,7 +53,7 @@ class ProdukController extends Controller
 
         Produk::create($data); // 🔥 model handle is_active
 
-        return redirect()->route('produk.index')
+        return redirect()->route('penjual.produk.index')
             ->with('success', 'Produk berhasil ditambahkan.');
     }
 
@@ -111,9 +115,10 @@ class ProdukController extends Controller
     public function destroy(Produk $produk)
     {
         // Proteksi kepemilikan
-        if ($produk->user_id !== auth()->id()) {
+        if ($produk->penjual_id !== auth()->user()->penjual->id) {
             abort(403);
         }
+
 
         // Jika produk sudah pernah dipesan → NONAKTIFKAN + STOK = 0
         if ($produk->orderItems()->exists()) {
@@ -145,8 +150,9 @@ class ProdukController extends Controller
      */
     protected function authorizeOwner(Produk $produk)
     {
-        if ($produk->user_id !== auth()->id()) {
+        if ($produk->penjual_id !== auth()->user()->penjual->id) {
             abort(403);
         }
     }
+
 }

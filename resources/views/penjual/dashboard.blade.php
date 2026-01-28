@@ -1,5 +1,5 @@
 @extends('layouts.penjual')
-
+@section('title', 'Dashboard')
 @section('content')
 
 {{-- HEADER HALAMAN --}}

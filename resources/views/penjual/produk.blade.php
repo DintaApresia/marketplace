@@ -1,4 +1,5 @@
 @extends('layouts.penjual')
+@section('title', 'Produk')
 @section('content')
 
 @php
@@ -114,7 +115,7 @@
                                     </button>
 
                                     {{-- TAMBAH STOK --}}
-                                    <form action="{{ route('produk.tambahStok', $produk->id) }}" method="POST">
+                                    <form action="{{ route('penjual.produk.tambahStok', $produk->id) }}" method="POST">
                                         @csrf
                                         <button type="submit"
                                             class="px-2 py-1 text-xs bg-green-600 text-white rounded
@@ -124,7 +125,7 @@
                                     </form>
 
                                     {{-- HAPUS --}}
-                                    <form action="{{ route('produk.destroy', $produk->id) }}" method="POST"
+                                    <form action="{{ route('penjual.produk.destroy', $produk->id) }}" method="POST"
                                         onsubmit="return confirm('Yakin ingin menghapus produk ini?')">
                                         @csrf
                                         @method('DELETE')
@@ -173,7 +174,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('produk.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+            <form action="{{ route('penjual.produk.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                 @csrf
 
                 <div>
@@ -251,7 +252,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('produk.update', $produk->id) }}"
+            <form action="{{ route('penjual.produk.update', $produk->id) }}"
                 method="POST"
                 enctype="multipart/form-data"
                 class="space-y-4">

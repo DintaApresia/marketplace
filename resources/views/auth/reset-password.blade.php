@@ -28,6 +28,7 @@
                         required
                         autofocus
                         autocomplete="username"
+                        readonly
                     />
                     <x-input-error :messages="$errors->get('email')" class="mt-1 text-xs" />
                 </div>
