@@ -98,16 +98,18 @@
             ☰
         </button>
 
-        {{-- USER --}}
+        {{-- PENJUAL --}}
         <div class="flex items-center gap-3 ml-auto">
             <span class="hidden sm:block text-sm font-medium text-gray-700">
-                {{ auth()->user()->name }}
+                {{ auth()->user()->penjual->nama_penjual ?? auth()->user()->name }}
             </span>
+
             <img
-                src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&background=334155&color=ffffff"
+                src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->penjual->nama_penjual ?? auth()->user()->name) }}&background=334155&color=ffffff"
                 class="w-9 h-9 rounded-full border border-gray-300"
                 alt="Avatar">
         </div>
+
 
     </div>
 </header>

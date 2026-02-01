@@ -109,7 +109,7 @@
     <table>
         <tr>
             <th style="width:35%">Nama Penjual</th>
-            <td>{{ auth()->user()->name }}</td>
+            <td>{{ auth()->user()->penjual?->nama_penjual }}</td>
         </tr>
         <tr>
             <th>Periode Laporan</th>

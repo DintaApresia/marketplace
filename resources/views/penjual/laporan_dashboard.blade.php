@@ -33,7 +33,7 @@
         <tr>
             <td class="w-1/3 text-gray-600">Nama Penjual</td>
             <td class="w-1">:</td>
-            <td class="font-medium">{{ auth()->user()->name }}</td>
+            <td class="font-medium">{{ auth()->user()->penjual->nama_penjual }}</td>
         </tr>
         <tr>
             <td class="text-gray-600">Periode Laporan</td>

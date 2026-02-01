@@ -33,8 +33,8 @@ class PencarianController extends Controller
             ->where('produk.is_active', 1)
             ->when($q !== '', function ($qb) use ($q) {
                 $qb->where(function ($sub) use ($q) {
-                    $sub->where('produk.nama_barang', 'like', "%{$q}%")
-                        ->orWhere('produk.deskripsi', 'like', "%{$q}%");
+                    $sub->where('produk.nama_barang', 'like', "%{$q}%");
+                        // ->orWhere('produk.deskripsi', 'like', "%{$q}%");
                 });
             });
 

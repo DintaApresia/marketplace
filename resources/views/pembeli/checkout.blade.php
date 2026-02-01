@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <title>Checkout</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    {{-- Tailwind (ikut Vite / CDN sesuai setupmu) --}}
     @vite(['resources/css/app.css','resources/js/app.js'])
 </head>
 
@@ -31,6 +29,22 @@
 
     <form action="{{ route('pembeli.orders.simpan') }}" method="POST" enctype="multipart/form-data">
         @csrf
+
+        {{-- 🔥 TAMBAHAN WAJIB (TIDAK MENGUBAH LOGIKA LAMA) --}}
+        @php
+            $firstItem = collect($cart)->first();
+        @endphp
+
+        @if(count($cart) === 1 && !request()->has('items'))
+            {{-- MODE: CHECKOUT LANGSUNG --}}
+            <input type="hidden" name="mode_checkout" value="langsung">
+            <input type="hidden" name="produk_id" value="{{ $firstItem['id'] }}">
+            <input type="hidden" name="qty" value="{{ $firstItem['qty'] }}">
+        @else
+            {{-- MODE: CHECKOUT KERANJANG --}}
+            <input type="hidden" name="mode_checkout" value="keranjang">
+        @endif
+        {{-- 🔥 END TAMBAHAN --}}
 
         <div class="grid md:grid-cols-2 gap-6">
 
@@ -80,12 +94,13 @@
                         <div class="flex justify-between text-sm border-b pb-2">
                             <div>
                                 <div class="text-xs text-gray-500 mb-0.5">
-                                🏪 {{ $item['nama_penjual'] }}
+                                    🏪 {{ $item['nama_penjual'] }}
                                 </div>
 
                                 <div class="font-medium">
                                     {{ $item['nama_barang'] ?? $item['nama'] ?? 'Produk' }}
                                 </div>
+
                                 <div class="text-gray-500">
                                     {{ $item['qty'] }} × Rp{{ number_format($item['harga'], 0, ',', '.') }}
                                 </div>
@@ -104,27 +119,20 @@
                             id="metode_pembayaran"
                             class="mt-1 w-full rounded-lg border p-2"
                             required>
-                        <option value="" disabled {{ old('metode_pembayaran') ? '' : 'selected' }}>-- Pilih --</option>
-                        <option value="cod" {{ old('metode_pembayaran')=='cod' ? 'selected' : '' }}>COD</option>
-                        <option value="transfer" {{ old('metode_pembayaran')=='transfer' ? 'selected' : '' }}>Transfer</option>
+                        <option value="" disabled selected>-- Pilih --</option>
+                        <option value="cod">COD</option>
+                        <option value="transfer">Transfer</option>
                     </select>
-                    @error('metode_pembayaran')
-                        <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
                 </div>
 
                 {{-- INFO TRANSFER --}}
                 <div id="box-transfer" class="mt-3 p-3 border rounded-lg bg-gray-50 hidden">
                     <p class="text-sm font-semibold mb-1">Transfer ke Rekening:</p>
                     <p class="text-sm">
-                        <span class="font-medium">
-                            {{ $penjual->nama_bank ?? '-' }}
-                        </span><br>
-                        No. Rekening:
-                        <span class="font-semibold">{{ $penjual->rekening ?? '-' }}</span><br>
+                        <span class="font-medium">{{ $penjual->nama_bank ?? '-' }}</span><br>
+                        No. Rekening: <span class="font-semibold">{{ $penjual->rekening ?? '-' }}</span><br>
                         A/N: {{ $penjual->nama_rekening ?? '-' }}
                     </p>
-
 
                     <div class="mt-3">
                         <label class="text-sm font-medium">Upload Bukti Pembayaran</label>
@@ -132,9 +140,6 @@
                                name="bukti_pembayaran"
                                accept="image/*"
                                class="mt-1 w-full rounded-lg border p-2">
-                        @error('bukti_pembayaran')
-                            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                        @enderror
                     </div>
                 </div>
 

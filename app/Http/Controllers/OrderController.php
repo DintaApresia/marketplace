@@ -221,9 +221,15 @@ class OrderController extends Controller
     */
     public function simpan(Request $request)
     {
+        // =====================
+        // VALIDASI INPUT
+        // =====================
         $request->validate([
+            'mode_checkout'     => 'required|in:keranjang,langsung',
             'metode_pembayaran' => 'required|in:cod,transfer',
             'catatan'           => 'nullable|string|max:500',
+            'produk_id'         => 'required_if:mode_checkout,langsung|exists:produk,id',
+            'qty'               => 'required_if:mode_checkout,langsung|integer|min:1',
             'bukti_pembayaran'  => [
                 'required_if:metode_pembayaran,transfer',
                 'image','mimes:jpg,jpeg,png,webp','max:2048'
@@ -231,30 +237,43 @@ class OrderController extends Controller
         ]);
 
         $pembeli = Pembeli::where('idUser', Auth::id())->first();
-        if (!$pembeli) {
-            return redirect()->route('pembeli.profile');
+        if (
+            !$pembeli ||
+            !$pembeli->nama_pembeli ||
+            !$pembeli->no_telp ||
+            !$pembeli->alamat
+        ) {
+            return redirect()
+                ->route('pembeli.profile')
+                ->with('error', 'Lengkapi data profil terlebih dahulu.');
         }
 
         try {
+
             $order = DB::transaction(function () use ($request, $pembeli) {
 
-                /**
-                 * =================================================
-                 * AMBIL ITEM (KERANJANG / CHECKOUT LANGSUNG)
-                 * =================================================
-                 */
+                // =====================
+                // AMBIL ITEM CHECKOUT
+                // =====================
                 $items = collect();
 
-                // MODE CHECKOUT LANGSUNG
-                if (session()->has('checkout_langsung')) {
+                /*
+                ==========================
+                MODE: CHECKOUT LANGSUNG
+                ==========================
+                */
+                if ($request->mode_checkout === 'langsung') {
 
-                    $data = session('checkout_langsung');
-                    session()->forget('checkout_langsung');
+                    $produk = Produk::with('penjual')
+                        ->lockForUpdate()
+                        ->findOrFail($request->produk_id);
 
-                    $produk = Produk::with('penjual')->lockForUpdate()->findOrFail($data['produk_id']);
-                    $qty    = (int) ($data['qty'] ?? 1);
+                    $qty = (int) $request->qty;
 
-                    if (!$produk->is_active || $produk->stok < $qty) {
+                    if (
+                        !$produk->is_active ||
+                        $produk->stok < $qty
+                    ) {
                         throw new \Exception('Produk tidak tersedia atau stok tidak mencukupi.');
                     }
 
@@ -263,7 +282,12 @@ class OrderController extends Controller
                         'jumlah' => $qty,
                     ]);
                 }
-                // MODE CHECKOUT DARI KERANJANG
+
+                /*
+                ==========================
+                MODE: CHECKOUT DARI KERANJANG
+                ==========================
+                */
                 else {
 
                     $keranjang = Keranjang::with('produk.penjual')
@@ -276,6 +300,7 @@ class OrderController extends Controller
                     }
 
                     foreach ($keranjang as $k) {
+
                         if (
                             !$k->produk ||
                             !$k->produk->is_active ||
@@ -291,11 +316,9 @@ class OrderController extends Controller
                     }
                 }
 
-                /**
-                 * =================================================
-                 * VALIDASI SATU PENJUAL
-                 * =================================================
-                 */
+                // =====================
+                // VALIDASI 1 PENJUAL
+                // =====================
                 $penjualIds = $items->pluck('produk.penjual_id')->unique();
                 if ($penjualIds->count() !== 1) {
                     throw new \Exception('Checkout hanya dapat dilakukan dari satu penjual.');
@@ -303,16 +326,17 @@ class OrderController extends Controller
 
                 $penjual = $items->first()->produk->penjual;
 
-                /**
-                 * =================================================
-                 * HITUNG SUBTOTAL, ONGKIR, TOTAL
-                 * =================================================
-                 */
+                // =====================
+                // HITUNG SUBTOTAL
+                // =====================
                 $subtotal = 0;
                 foreach ($items as $it) {
                     $subtotal += $it->produk->harga * $it->jumlah;
                 }
 
+                // =====================
+                // HITUNG ONGKIR
+                // =====================
                 $ongkir = $this->hitungOngkir(
                     $penjual->latitude ?? null,
                     $penjual->longitude ?? null,
@@ -322,11 +346,9 @@ class OrderController extends Controller
 
                 $total = $subtotal + $ongkir;
 
-                /**
-                 * =================================================
-                 * UPLOAD BUKTI PEMBAYARAN (JIKA ADA)
-                 * =================================================
-                 */
+                // =====================
+                // UPLOAD BUKTI BAYAR
+                // =====================
                 $buktiPath = null;
                 if (
                     $request->metode_pembayaran === 'transfer' &&
@@ -336,11 +358,9 @@ class OrderController extends Controller
                         ->store('bukti_pembayaran', 'public');
                 }
 
-                /**
-                 * =================================================
-                 * SIMPAN ORDER
-                 * =================================================
-                 */
+                // =====================
+                // SIMPAN ORDER
+                // =====================
                 $order = Order::create([
                     'user_id'           => Auth::id(),
                     'nama_penerima'     => $pembeli->nama_pembeli,
@@ -358,11 +378,9 @@ class OrderController extends Controller
                     'catatan'           => $request->catatan,
                 ]);
 
-                /**
-                 * =================================================
-                 * SIMPAN ITEM + KURANGI STOK
-                 * =================================================
-                 */
+                // =====================
+                // SIMPAN ITEM & KURANGI STOK
+                // =====================
                 foreach ($items as $it) {
 
                     OrderItem::create([
@@ -377,8 +395,12 @@ class OrderController extends Controller
                     $it->produk->decrement('stok', $it->jumlah);
                 }
 
-                // Bersihkan keranjang jika mode keranjang
-                Keranjang::where('id_user', Auth::id())->delete();
+                // =====================
+                // BERSIHKAN KERANJANG
+                // =====================
+                if ($request->mode_checkout === 'keranjang') {
+                    Keranjang::where('id_user', Auth::id())->delete();
+                }
 
                 return $order;
             });
@@ -392,7 +414,6 @@ class OrderController extends Controller
             return back()->with('error', $e->getMessage());
         }
     }
-
 
     /**
      * GET /order/{orderId}/sukses
