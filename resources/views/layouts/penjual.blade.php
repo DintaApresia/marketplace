@@ -9,23 +9,59 @@
 
 <body class="bg-gray-100 text-gray-800 overflow-x-hidden">
 
+{{-- ================= HEADER ================= --}}
+<header
+    class="fixed top-0 left-0 right-0 z-50
+           bg-white border-b border-gray-200 shadow-sm">
+
+    <div class="flex items-center justify-between px-4 md:px-6 h-[72px]">
+
+        {{-- LEFT --}}
+        <div class="flex items-center gap-4">
+            <button
+                onclick="openSidebar()"
+                class="md:hidden text-2xl text-gray-700 focus:outline-none">
+                ☰
+            </button>
+
+            <div>
+                <h1 class="text-lg font-bold text-gray-900">
+                    Panel Penjual
+                </h1>
+                <p class="text-xs text-gray-500">
+                    SecondLife Marketplace
+                </p>
+            </div>
+        </div>
+
+        {{-- USER --}}
+        <div class="flex items-center gap-3">
+            <span class="hidden sm:block text-sm font-medium text-gray-700">
+                {{ auth()->user()->penjual->nama_penjual ?? auth()->user()->name }}
+            </span>
+
+            <img
+                src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->penjual->nama_penjual ?? auth()->user()->name) }}&background=334155&color=ffffff"
+                class="w-9 h-9 rounded-full border border-gray-300"
+                alt="Avatar">
+        </div>
+
+    </div>
+</header>
+
 {{-- ================= SIDEBAR ================= --}}
 <aside
     id="sidebar"
-    class="fixed top-0 left-0 z-50
-           h-full w-64
+    class="fixed left-0 z-40
+           top-[72px]
+           h-[calc(100vh-72px)]
+           w-64
            bg-slate-900 text-slate-200
            transform -translate-x-full
            transition-transform duration-300
            md:translate-x-0">
 
     <nav class="p-4 text-sm h-full flex flex-col">
-
-        {{-- BRAND --}}
-        <div class="mb-6">
-            <h1 class="text-lg font-bold text-white">Panel Penjual</h1>
-            <p class="text-xs text-slate-400">SecondLife Marketplace</p>
-        </div>
 
         {{-- MOBILE CLOSE --}}
         <button
@@ -84,45 +120,17 @@
     </nav>
 </aside>
 
-{{-- ================= HEADER ================= --}}
-<header
-    class="fixed top-0 left-0 right-0 z-40
-           bg-white border-b border-gray-200 shadow-sm
-           md:ml-64">
-    <div class="flex items-center justify-between px-4 md:px-6 py-4">
-
-        {{-- LEFT --}}
-        <button
-            onclick="openSidebar()"
-            class="md:hidden text-2xl text-gray-700 focus:outline-none">
-            ☰
-        </button>
-
-        {{-- PENJUAL --}}
-        <div class="flex items-center gap-3 ml-auto">
-            <span class="hidden sm:block text-sm font-medium text-gray-700">
-                {{ auth()->user()->penjual->nama_penjual ?? auth()->user()->name }}
-            </span>
-
-            <img
-                src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->penjual->nama_penjual ?? auth()->user()->name) }}&background=334155&color=ffffff"
-                class="w-9 h-9 rounded-full border border-gray-300"
-                alt="Avatar">
-        </div>
-
-
-    </div>
-</header>
-
 {{-- ================= BACKDROP ================= --}}
 <div
     id="sidebar-backdrop"
     onclick="closeSidebar()"
-    class="fixed inset-0 bg-black/50 z-40 hidden md:hidden">
+    class="fixed inset-0 bg-black/50 z-30 hidden md:hidden">
 </div>
 
 {{-- ================= MAIN CONTENT ================= --}}
-<main class="pt-[72px] md:ml-64 p-4 md:p-6">
+<main class="pt-[88px] md:pl-[17rem] px-4 md:px-6 pb-6">
+    {{-- 17rem = 256px sidebar + 16px gap --}}
+
     <div class="mb-6">
         <h2 class="text-lg font-semibold text-gray-800">
             @yield('title')
@@ -132,6 +140,7 @@
     <div class="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
         @yield('content')
     </div>
+
 </main>
 
 {{-- ================= SCRIPT ================= --}}
