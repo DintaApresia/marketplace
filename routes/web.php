@@ -12,6 +12,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderMasukController;
 use App\Http\Controllers\PublicDashboardController;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Http\Controllers\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,7 +35,9 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 require __DIR__.'/auth.php';
-
+// Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+// Route::post('/login', [AuthController::class, 'login']);
+// Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 /*
 |--------------------------------------------------------------------------
 | Redirect /dashboard sesuai role
