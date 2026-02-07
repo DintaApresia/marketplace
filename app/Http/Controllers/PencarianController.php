@@ -62,24 +62,42 @@ class PencarianController extends Controller
          * join ke tabel penjuals (bukan penjual)
          */
         $products = $base
-            ->join('penjuals as pj', 'pj.id', '=', 'produk.penjual_id')
-            ->whereNotNull('pj.latitude')
-            ->whereNotNull('pj.longitude')
-            ->whereBetween('pj.latitude',  [$buyerLat - $latDelta, $buyerLat + $latDelta])
-            ->whereBetween('pj.longitude', [$buyerLng - $lngDelta, $buyerLng + $lngDelta])
-            ->select('produk.*')
-            ->selectRaw(
-                "(6371 * acos(
-                    cos(radians(?)) * cos(radians(pj.latitude)) *
-                    cos(radians(pj.longitude) - radians(?)) +
-                    sin(radians(?)) * sin(radians(pj.latitude))
-                )) AS distance",
-                [$buyerLat, $buyerLng, $buyerLat]
-            )
-            ->having('distance', '<=', $maxKm)
-            ->orderBy('distance', 'asc')
-            ->paginate(12)
-            ->withQueryString();
+        ->join('penjuals as pj', 'pj.id', '=', 'produk.penjual_id')
+        ->whereNotNull('pj.latitude')
+        ->whereNotNull('pj.longitude')
+        ->whereBetween('pj.latitude',  [$buyerLat - $latDelta, $buyerLat + $latDelta])
+        ->whereBetween('pj.longitude', [$buyerLng - $lngDelta, $buyerLng + $lngDelta])
+        ->select('produk.*')
+        ->selectRaw(
+            "(
+                6371 * 2 * atan2(
+                    sqrt(
+                        pow(sin(radians(pj.latitude - ?)/2), 2) +
+                        cos(radians(?)) * cos(radians(pj.latitude)) *
+                        pow(sin(radians(pj.longitude - ?)/2), 2)
+                    ),
+                    sqrt(
+                        1 - (
+                            pow(sin(radians(pj.latitude - ?)/2), 2) +
+                            cos(radians(?)) * cos(radians(pj.latitude)) *
+                            pow(sin(radians(pj.longitude - ?)/2), 2)
+                        )
+                    )
+                )
+            ) AS distance",
+            [
+                $buyerLat, // Δlat
+                $buyerLat, // cos(lat1)
+                $buyerLng, // Δlon
+                $buyerLat,
+                $buyerLat,
+                $buyerLng
+            ]
+        )
+        ->having('distance', '<=', $maxKm)
+        ->orderBy('distance', 'asc')
+        ->paginate(12)
+        ->withQueryString();
 
         $lbs_enabled = true;
 
