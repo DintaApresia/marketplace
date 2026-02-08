@@ -18,7 +18,8 @@
         </div>
     @endif
 
-    @if ($errors->any())
+    {{-- validasi input --}}
+    @if ($errors->any()) 
         <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-2 rounded-lg">
             <div class="font-semibold mb-1">Periksa input kamu:</div>
             <ul class="list-disc pl-5 text-sm space-y-1">
@@ -216,24 +217,26 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-
+    //ambil input lat and long
     const latInput     = document.getElementById('latitude');
     const lngInput     = document.getElementById('longitude');
     const alamatInput  = document.getElementById('alamat');
     const statusEl     = document.getElementById('location-status');
-
+    
+    //set nilai awal lat and long
     let lat  = latInput.value ? parseFloat(latInput.value) : -6.200000;
     let lng  = lngInput.value ? parseFloat(lngInput.value) : 106.816666;
     let zoom = latInput.value ? 16 : 6;
 
-    const map = L.map('map').setView([lat, lng], zoom);
+    const map = L.map('map').setView([lat, lng], zoom); //inisialisasi map
 
+    //peta berisi gambar bangunan dll
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    let marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+    let marker = L.marker([lat, lng], { draggable: true }).addTo(map); //geser pin
 
     /* ========= MAP → ALAMAT ========= */
     async function reverseGeocode(lat, lng) {
@@ -251,6 +254,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    //memperbarui map ketika digeser
     marker.on('dragend', function () {
         const pos = marker.getLatLng();
         latInput.value = pos.lat.toFixed(6);
@@ -258,6 +262,7 @@ document.addEventListener('DOMContentLoaded', function () {
         reverseGeocode(pos.lat, pos.lng);
     });
 
+    //update map ketika diklik
     map.on('click', function (e) {
         marker.setLatLng(e.latlng);
         latInput.value = e.latlng.lat.toFixed(6);

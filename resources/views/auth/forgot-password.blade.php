@@ -28,7 +28,7 @@
                     />
                     <x-text-input
                         id="email"
-                        class="mt-1 block w-full rounded-md border-gray-300 focus:border-green-500 focus:ring-green-500"
+                        class="mt-1 block w-full rounded-xl border-gray-300 focus:border-green-500 focus:ring-green-500"
                         type="email"
                         name="email"
                         :value="old('email')"

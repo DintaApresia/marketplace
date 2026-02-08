@@ -33,6 +33,7 @@ class PenjualController extends Controller
         return view('penjual.profile', compact('user', 'penjual'));
     }
 
+    //pernah submit sebagai penjual
     public function showDaftar(Request $request)
     {
         $user = $request->user();
@@ -53,7 +54,7 @@ class PenjualController extends Controller
     }
 
     /**
-     * Simpan pengajuan penjual + ngopi data dari pembeli
+     * Simpan pengajuan penjual + ngopi data dari pembeli (daftar)
      */
     public function submitDaftar(Request $request)
     {
@@ -224,9 +225,7 @@ class PenjualController extends Controller
         ));
     }
 
-    // ===========================
-    // ✅ LAPORAN (FIX FINAL)
-    // ===========================
+    // Laporan
     private function getLaporanData(Request $request)
     {
         $penjualId = Auth::user()->penjual->id;
@@ -299,8 +298,6 @@ class PenjualController extends Controller
     {
         return view('penjual.laporan_dashboard', $this->getLaporanData($request));
     }
-
-
     public function downloadLaporan(Request $request)
     {
         $data = $this->getLaporanData($request);

@@ -34,32 +34,63 @@
                 </div>
 
                 {{-- Password --}}
-                <div>
+                <div x-data="{ show: false }">
                     <x-input-label for="password" value="Password Baru" />
-                    <x-text-input
-                        id="password"
-                        type="password"
-                        name="password"
-                        class="mt-1 block w-full rounded-md border-gray-300 focus:border-green-500 focus:ring-green-500"
-                        required
-                        autocomplete="new-password"
-                    />
+
+                    <div class="relative mt-1">
+                        <x-text-input
+                            id="password"
+                            name="password"
+                            x-bind:type="show ? 'text' : 'password'"
+                            class="block w-full rounded-md border-gray-300 pr-10
+                                focus:border-green-500 focus:ring-green-500"
+                            required
+                            autocomplete="new-password"
+                        />
+
+                        {{-- Toggle eye --}}
+                        <button
+                            type="button"
+                            @click="show = !show"
+                            class="absolute inset-y-0 right-3 flex items-center
+                                text-gray-500 hover:text-gray-700"
+                        >
+                            <i class="bi" :class="show ? 'bi-eye-slash' : 'bi-eye'"></i>
+                        </button>
+                    </div>
+
                     <x-input-error :messages="$errors->get('password')" class="mt-1 text-xs" />
                 </div>
 
                 {{-- Confirm Password --}}
-                <div>
+                <div x-data="{ show: false }">
                     <x-input-label for="password_confirmation" value="Konfirmasi Password" />
-                    <x-text-input
-                        id="password_confirmation"
-                        type="password"
-                        name="password_confirmation"
-                        class="mt-1 block w-full rounded-md border-gray-300 focus:border-green-500 focus:ring-green-500"
-                        required
-                        autocomplete="new-password"
-                    />
+
+                    <div class="relative mt-1">
+                        <x-text-input
+                            id="password_confirmation"
+                            name="password_confirmation"
+                            x-bind:type="show ? 'text' : 'password'"
+                            class="block w-full rounded-md border-gray-300 pr-10
+                                focus:border-green-500 focus:ring-green-500"
+                            required
+                            autocomplete="new-password"
+                        />
+
+                        {{-- Toggle eye --}}
+                        <button
+                            type="button"
+                            @click="show = !show"
+                            class="absolute inset-y-0 right-3 flex items-center
+                                text-gray-500 hover:text-gray-700"
+                        >
+                            <i class="bi" :class="show ? 'bi-eye-slash' : 'bi-eye'"></i>
+                        </button>
+                    </div>
+
                     <x-input-error :messages="$errors->get('password_confirmation')" class="mt-1 text-xs" />
                 </div>
+
 
                 {{-- Submit --}}
                 <div class="pt-2">

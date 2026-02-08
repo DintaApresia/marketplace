@@ -188,6 +188,7 @@
                 <div>
                     <label class="block text-sm font-medium mb-1">Harga</label>
                     <input type="number" name="harga" min="0"
+                            onkeydown="return event.key !== '-'"
                            value="{{ old('harga') }}"
                            class="w-full border rounded px-3 py-2 text-sm"
                            required>
@@ -196,6 +197,7 @@
                 <div>
                     <label class="block text-sm font-medium mb-1">Stok</label>
                     <input type="number" name="stok" min="0"
+                            onkeydown="return event.key !== '-'"
                            value="{{ old('stok') }}"
                            class="w-full border rounded px-3 py-2 text-sm"
                            required>
@@ -270,6 +272,7 @@
                 <div>
                     <label class="block text-sm font-medium mb-1">Harga</label>
                     <input type="number" name="harga" min="0"
+                        onkeydown="return event.key !== '-'"
                         value="{{ old('harga', $produk->harga) }}"
                         class="w-full border rounded px-3 py-2 text-sm"
                         required>
@@ -278,6 +281,7 @@
                 <div>
                     <label class="block text-sm font-medium mb-1">Stok</label>
                     <input type="number" name="stok" min="0"
+                        onkeydown="return event.key !== '-'"
                         value="{{ old('stok', $produk->stok) }}"
                         class="w-full border rounded px-3 py-2 text-sm"
                         required>
@@ -338,27 +342,6 @@ function openEditForm(id) {
 function closeEditForm(id) {
     document.getElementById('editModal-' + id)?.classList.add('hidden');
 }
-</script>
-
-{{-- ========================= --}}
-{{-- SCRIPT ANTI MINUS --}}
-{{-- ========================= --}}
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const noMinusInputs = document.querySelectorAll('input[type="number"]');
-
-    noMinusInputs.forEach(input => {
-        input.addEventListener('keydown', function (e) {
-            if (e.key === '-' || e.key === 'Minus') {
-                e.preventDefault();
-            }
-        });
-
-        input.addEventListener('input', function () {
-            if (this.value < 0) this.value = 0;
-        });
-    });
-});
 </script>
 
 {{-- ========================= --}}
