@@ -134,14 +134,15 @@ class OrderController extends Controller
                 'stok'         => (int) $produk->stok,
                 'gambar'       => $produk->gambar,
                 'nama_penjual' => $produk->penjual->nama_toko
-                                  ?? $produk->penjual->nama_penjual
-                                  ?? 'Penjual',
+                                ?? $produk->penjual->nama_penjual
+                                ?? 'Penjual',
             ];
 
             $subtotal = $produk->harga * $qty;
 
             $penjual = $produk->penjual;
         }
+
         /*
         ==========================
         MODE 2: CHECKOUT DARI KERANJANG
@@ -157,6 +158,9 @@ class OrderController extends Controller
                     ->with('error', 'Pilih minimal satu produk untuk checkout.');
             }
 
+            // ✅ simpan item terpilih supaya konsisten saat submit
+            session(['checkout_items' => $selectedItems]);
+
             $items = Keranjang::with('produk.penjual')
                 ->where('id_user', Auth::id())
                 ->whereIn('id_produk', $selectedItems)
@@ -166,8 +170,13 @@ class OrderController extends Controller
                 return redirect()->route('pembeli.keranjang');
             }
 
-            // VALIDASI 1 PENJUAL
-            if ($items->pluck('produk.penjual_id')->unique()->count() > 1) {
+            // VALIDASI 1 PENJUAL (tetap)
+            $penjualCount = $items->pluck('produk.penjual_id')
+                ->map(fn($v) => (int) $v)
+                ->unique()
+                ->count();
+
+            if ($penjualCount > 1) {
                 return redirect()
                     ->route('pembeli.keranjang')
                     ->with('error', 'Checkout hanya dapat dilakukan dari satu penjual.');
@@ -183,13 +192,20 @@ class OrderController extends Controller
                     'stok'         => (int) $p->stok,
                     'gambar'       => $p->gambar,
                     'nama_penjual' => $p->penjual->nama_toko
-                                      ?? $p->penjual->nama_penjual
-                                      ?? 'Penjual',
+                                    ?? $p->penjual->nama_penjual
+                                    ?? 'Penjual',
                 ];
                 $subtotal += $p->harga * $k->jumlah;
             }
 
             $penjual = $items->first()->produk->penjual;
+        }
+
+        // =====================
+        // BERSIHKAN ALERT “NYANGKUT” (HANYA PESAN INI)
+        // =====================
+        if (session('error') === 'Checkout hanya dapat dilakukan dari satu penjual.') {
+            session()->forget('error');
         }
 
         // =====================
@@ -213,7 +229,6 @@ class OrderController extends Controller
             'penjual'
         ));
     }
-
     /*
     |--------------------------------------------------------------------------
     | SIMPAN ORDER (FINAL)
@@ -230,6 +245,11 @@ class OrderController extends Controller
             'catatan'           => 'nullable|string|max:500',
             'produk_id'         => 'required_if:mode_checkout,langsung|exists:produk,id',
             'qty'               => 'required_if:mode_checkout,langsung|integer|min:1',
+
+            // ✅ wajib untuk mode keranjang
+            'items'             => 'required_if:mode_checkout,keranjang|array|min:1',
+            'items.*'           => 'integer|exists:produk,id',
+
             'bukti_pembayaran'  => [
                 'required_if:metode_pembayaran,transfer',
                 'image','mimes:jpg,jpeg,png,webp','max:2048'
@@ -290,13 +310,21 @@ class OrderController extends Controller
                 */
                 else {
 
+                    // ✅ ambil hanya item yang dipilih (dari form, fallback session)
+                    $selected = $request->items ?: session('checkout_items', []);
+
+                    if (!$selected || !is_array($selected)) {
+                        throw new \Exception('Item checkout tidak ditemukan. Silakan ulangi checkout.');
+                    }
+
                     $keranjang = Keranjang::with('produk.penjual')
                         ->where('id_user', Auth::id())
+                        ->whereIn('id_produk', $selected)
                         ->lockForUpdate()
                         ->get();
 
                     if ($keranjang->isEmpty()) {
-                        throw new \Exception('Keranjang kosong.');
+                        throw new \Exception('Keranjang kosong atau item tidak ditemukan.');
                     }
 
                     foreach ($keranjang as $k) {
@@ -317,9 +345,12 @@ class OrderController extends Controller
                 }
 
                 // =====================
-                // VALIDASI 1 PENJUAL
+                // VALIDASI 1 PENJUAL (AMAN TIPE DATA)
                 // =====================
-                $penjualIds = $items->pluck('produk.penjual_id')->unique();
+                $penjualIds = $items->pluck('produk.penjual_id')
+                    ->map(fn($v) => (int) $v)
+                    ->unique();
+
                 if ($penjualIds->count() !== 1) {
                     throw new \Exception('Checkout hanya dapat dilakukan dari satu penjual.');
                 }
@@ -396,10 +427,15 @@ class OrderController extends Controller
                 }
 
                 // =====================
-                // BERSIHKAN KERANJANG
+                // BERSIHKAN KERANJANG (HANYA YANG DIPESAN)
                 // =====================
                 if ($request->mode_checkout === 'keranjang') {
-                    Keranjang::where('id_user', Auth::id())->delete();
+                    $selected = $request->items ?: session('checkout_items', []);
+                    Keranjang::where('id_user', Auth::id())
+                        ->whereIn('id_produk', $selected)
+                        ->delete();
+
+                    session()->forget('checkout_items');
                 }
 
                 return $order;

@@ -123,14 +123,35 @@
                   @csrf
                   @method('PATCH')
                   <select name="status"
-                          class="text-xs border-gray-300 rounded-md focus:ring-0"
+                          class="
+                            text-xs font-semibold
+                            px-3 py-1.5
+                            rounded-md
+                            border
+                            min-w-[120px]
+                            focus:outline-none focus:ring-0
+                            appearance-none
+
+                            @if($status=='menunggu')
+                              bg-gray-200 text-gray-800 border-gray-300
+                            @elseif($status=='dikemas')
+                              bg-yellow-200 text-yellow-900 border-yellow-400
+                            @elseif($status=='dikirim')
+                              bg-blue-200 text-blue-900 border-blue-400
+                            @elseif($status=='selesai')
+                              bg-green-200 text-green-900 border-green-400
+                            @elseif($status=='ditolak')
+                              bg-red-200 text-red-900 border-red-400
+                            @endif
+                          "
                           onchange="this.form.submit()">
-                    <option value="menunggu" @selected($status=='menunggu')>Menunggu</option>
-                    <option value="dikemas" @selected($status=='dikemas')>Dikemas</option>
-                    <option value="dikirim" @selected($status=='dikirim')>Dikirim</option>
-                    <option value="selesai" @selected($status=='selesai')>Selesai</option>
-                    <option value="ditolak" @selected($status=='ditolak')>Ditolak</option>
+                      <option value="menunggu" @selected($status=='menunggu')>Menunggu</option>
+                      <option value="dikemas" @selected($status=='dikemas')>Dikemas</option>
+                      <option value="dikirim" @selected($status=='dikirim')>Dikirim</option>
+                      <option value="selesai" @selected($status=='selesai')>Selesai</option>
+                      <option value="ditolak" @selected($status=='ditolak')>Ditolak</option>
                   </select>
+
                 </form>
               </td>
 

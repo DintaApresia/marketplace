@@ -30,21 +30,23 @@
     <form action="{{ route('pembeli.orders.simpan') }}" method="POST" enctype="multipart/form-data">
         @csrf
 
-        {{-- 🔥 TAMBAHAN WAJIB (TIDAK MENGUBAH LOGIKA LAMA) --}}
         @php
             $firstItem = collect($cart)->first();
         @endphp
 
-        @if(count($cart) === 1 && !request()->has('items'))
-            {{-- MODE: CHECKOUT LANGSUNG --}}
+        {{-- MODE: CHECKOUT LANGSUNG (1 item dari session checkout_langsung) --}}
+        @if(session()->missing('checkout_items') && count($cart) === 1)
             <input type="hidden" name="mode_checkout" value="langsung">
             <input type="hidden" name="produk_id" value="{{ $firstItem['id'] }}">
             <input type="hidden" name="qty" value="{{ $firstItem['qty'] }}">
         @else
-            {{-- MODE: CHECKOUT KERANJANG --}}
+            {{-- MODE: CHECKOUT KERANJANG (kirim item yang ada di halaman checkout) --}}
             <input type="hidden" name="mode_checkout" value="keranjang">
+
+            @foreach($cart as $item)
+                <input type="hidden" name="items[]" value="{{ $item['id'] }}">
+            @endforeach
         @endif
-        {{-- 🔥 END TAMBAHAN --}}
 
         <div class="grid md:grid-cols-2 gap-6">
 
@@ -55,33 +57,33 @@
                 <div>
                     <label class="text-sm font-medium">Nama Penerima</label>
                     <input type="text"
-                           class="mt-1 w-full rounded-lg border p-2 bg-gray-100"
-                           value="{{ $pembeli->nama_pembeli ?? '-' }}"
-                           readonly>
+                        class="mt-1 w-full rounded-lg border p-2 bg-gray-100"
+                        value="{{ $pembeli->nama_pembeli ?? '-' }}"
+                        readonly>
                 </div>
 
                 <div>
                     <label class="text-sm font-medium">No. HP</label>
                     <input type="text"
-                           class="mt-1 w-full rounded-lg border p-2 bg-gray-100"
-                           value="{{ $pembeli->no_telp ?? '-' }}"
-                           readonly>
+                        class="mt-1 w-full rounded-lg border p-2 bg-gray-100"
+                        value="{{ $pembeli->no_telp ?? '-' }}"
+                        readonly>
                 </div>
 
                 <div>
                     <label class="text-sm font-medium">Alamat Pengiriman</label>
                     <textarea rows="4"
-                              class="mt-1 w-full rounded-lg border p-2 bg-gray-100"
-                              readonly>{{ $pembeli->alamat ?? '-' }}</textarea>
+                            class="mt-1 w-full rounded-lg border p-2 bg-gray-100"
+                            readonly>{{ $pembeli->alamat ?? '-' }}</textarea>
                 </div>
 
                 <div>
                     <label class="text-sm font-medium">Catatan (opsional)</label>
                     <input type="text"
-                           name="catatan"
-                           class="mt-1 w-full rounded-lg border p-2"
-                           placeholder="Misal: taruh di pos satpam"
-                           value="{{ old('catatan') }}">
+                        name="catatan"
+                        class="mt-1 w-full rounded-lg border p-2"
+                        placeholder="Misal: taruh di pos satpam"
+                        value="{{ old('catatan') }}">
                 </div>
             </div>
 
@@ -137,9 +139,9 @@
                     <div class="mt-3">
                         <label class="text-sm font-medium">Upload Bukti Pembayaran</label>
                         <input type="file"
-                               name="bukti_pembayaran"
-                               accept="image/*"
-                               class="mt-1 w-full rounded-lg border p-2">
+                            name="bukti_pembayaran"
+                            accept="image/*"
+                            class="mt-1 w-full rounded-lg border p-2">
                     </div>
                 </div>
 
@@ -168,6 +170,7 @@
 
         </div>
     </form>
+
 </div>
 
 <script>

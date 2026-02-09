@@ -35,7 +35,7 @@ class AdminController extends Controller
     {
         $penjuals = Penjual::with('user')
             ->whereHas('user', function ($q) {
-                $q->whereIn('seller_status', ['pending', 'verified']);
+                $q->whereIn('seller_status', ['verified']);
             })
             ->latest()
             ->get();
