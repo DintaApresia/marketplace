@@ -6,11 +6,13 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Pembeli;
 use App\Models\Produk;
+use App\Models\Aduan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Keranjang;
 use App\Models\ProdukRating;
+use App\Models\OrderStatusLog;
 use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
@@ -208,6 +210,14 @@ class OrderController extends Controller
             session()->forget('error');
         }
 
+        // ✅ TAMBAHAN (TIDAK MENGUBAH FLOW): SIMPAN PENJUAL_ID KE SESSION
+        // ini dipakai nanti saat simpan order supaya orders.penjual_id terisi
+        if (isset($penjual) && $penjual) {
+            session(['checkout_penjual_id' => $penjual->id]);
+        } else {
+            session()->forget('checkout_penjual_id');
+        }
+
         // =====================
         // ONGKIR & TOTAL
         // =====================
@@ -271,17 +281,10 @@ class OrderController extends Controller
         try {
 
             $order = DB::transaction(function () use ($request, $pembeli) {
-
-                // =====================
                 // AMBIL ITEM CHECKOUT
-                // =====================
                 $items = collect();
 
-                /*
-                ==========================
-                MODE: CHECKOUT LANGSUNG
-                ==========================
-                */
+                //MODE: CHECKOUT LANGSUNG
                 if ($request->mode_checkout === 'langsung') {
 
                     $produk = Produk::with('penjual')
@@ -394,6 +397,7 @@ class OrderController extends Controller
                 // =====================
                 $order = Order::create([
                     'user_id'           => Auth::id(),
+                    'penjual_id' => (int) (session('checkout_penjual_id') ?? $penjualIds->first()),
                     'nama_penerima'     => $pembeli->nama_pembeli,
                     'no_hp'             => $pembeli->no_telp,
                     'alamat_pengiriman' => $pembeli->alamat,
@@ -407,6 +411,14 @@ class OrderController extends Controller
                                             : 'belum_bayar',
                     'bukti_pembayaran'  => $buktiPath,
                     'catatan'           => $request->catatan,
+                ]);
+
+                // Insert log pertama
+                OrderStatusLog::create([
+                    'order_id'   => $order->id,
+                    'status'     => 'menunggu',
+                    'actor_role' => 'pembeli',
+                    'actor_id'   => Auth::id(),
                 ]);
 
                 // =====================
@@ -481,35 +493,42 @@ class OrderController extends Controller
             'tanggal_selesai' => now(),
         ]);
 
+        OrderStatusLog::create([
+            'order_id'   => $order->id,
+            'status'     => 'selesai',
+            'actor_role' => 'pembeli',
+            'actor_id'   => Auth::id(),
+        ]);
+
         // Kembali ke riwayat pesanan (BUKAN detail)
         return back()->with('success', 'Pesanan berhasil diselesaikan.');
     }
 
     public function show(Order $order)
     {
-        // Validasi kepemilikan
-        if ($order->user_id !== Auth::id()) {
-            abort(403);
-        }
-
-        // Halaman detail hanya untuk selesai
-        $status = $order->status_pesanan ?? $order->status;
-
-        if ($status !== 'selesai') {
-            abort(404);
-        }
+        if ($order->user_id !== Auth::id()) abort(403);
 
         $order->load([
             'items.produk',
+            'statusLogs',
             'ratings',
+            'aduans', // WAJIB ADA
         ]);
 
         $rated = $order->ratings
             ->whereNotNull('produk_id')
             ->keyBy('produk_id');
 
-        return view('pembeli.order_selesai', compact('order', 'rated'));
+        // ambil 1 aduan (karena 1 order = 1 aduan)
+        $aduan = $order->aduans->first();
+
+        return view('pembeli.order_selesai', compact(
+            'order',
+            'rated',
+            'aduan'
+        ));
     }
+
 
     /**
      * SIMPAN / UPDATE RATING + UPLOAD MULTI GAMBAR
@@ -632,5 +651,47 @@ class OrderController extends Controller
         return back()->with('success', 'Review berhasil diperbarui.');
     }
 
+    public function storeAduan(Request $request, Order $order)
+    {
+        // Pastikan order milik pembeli yang login
+        abort_unless((int)$order->user_id === (int)Auth::id(), 403);
 
+        $data = $request->validate([
+            'judul' => 'required|string|max:150',
+            'deskripsi' => 'required|string|max:2000',
+            'bukti.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
+
+        try {
+            DB::transaction(function () use ($request, $order, $data) {
+
+                $paths = [];
+
+                // Upload bukti (kalau ada)
+                if ($request->hasFile('bukti')) {
+                    foreach ($request->file('bukti') as $file) {
+                        $paths[] = $file->store('bukti_aduan', 'public');
+                    }
+                }
+
+                Aduan::create([
+                    'order_id' => $order->id,
+                    'user_id' => Auth::id(),
+                    'penjual_id' => (int)$order->penjual_id,
+                    'judul' => $data['judul'],
+                    'deskripsi' => $data['deskripsi'],
+                    'bukti' => $paths ?: null,
+                    'status_pesanan_saat_aduan' => $order->status_pesanan,
+                    'status_aduan' => 'baru',
+                    'last_actor_role' => 'pembeli',
+                    'last_actor_id' => Auth::id(),
+                ]);
+            });
+
+            return back()->with('success', 'Aduan berhasil dikirim.');
+
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Terjadi kesalahan saat mengirim aduan.');
+        }
+    }
 }

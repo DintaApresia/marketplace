@@ -8,6 +8,7 @@ class Order extends Model
 {
     protected $fillable = [
         'user_id',
+        'penjual_id',
         'nama_penerima',
         'no_hp',
         'alamat_pengiriman',
@@ -35,4 +36,25 @@ class Order extends Model
     {
         return $this->hasMany(ProdukRating::class);
     }
+
+    public function statusLogs()
+    {
+        return $this->hasMany(OrderStatusLog::class)->orderBy('created_at');
+    }
+
+    public function latestStatusLog()
+    {
+        return $this->hasOne(OrderStatusLog::class)->latestOfMany();
+    }
+
+    public function aduans()
+    {
+        return $this->hasMany(Aduan::class);
+    }
+
+    public function aduan()
+    {
+        return $this->hasOne(Aduan::class, 'order_id');
+    }
+
 }

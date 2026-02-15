@@ -192,6 +192,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
+    //ambil input lat&long
     const latInput  = document.getElementById('lat_toko');
     const lngInput  = document.getElementById('lng_toko');
     const addrInput = document.getElementById('alamat_toko');
@@ -210,6 +211,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const map = L.map('map-toko').setView([initialLat, initialLng], initialZoom);
 
+    //peta berisi gambar bangunan dll
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; OpenStreetMap contributors'
@@ -303,6 +305,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    //Menjalankan pencarian lokasi (geocoding) setelah user berhenti ngetik
     addrInput.addEventListener('input', function () {
         const query = this.value.trim();
         clearTimeout(geocodeTimeout);

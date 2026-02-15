@@ -273,6 +273,7 @@ document.addEventListener('DOMContentLoaded', function () {
     /* ========= ALAMAT → MAP ========= */
     let typingTimer;
 
+    //memproses map setelah mengetik
     alamatInput.addEventListener('input', function () {
         clearTimeout(typingTimer);
 

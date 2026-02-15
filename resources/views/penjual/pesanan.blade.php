@@ -61,6 +61,25 @@
 
               $kode   = $order->kode_order ?? ('ORD-'.$order->id);
               $status = $order->status_pesanan ?? 'menunggu';
+
+              // badge style (UI only)
+              $badgeClass = match($status) {
+                'menunggu' => 'bg-gray-200 text-gray-800 border border-gray-300',
+                'dikemas'  => 'bg-yellow-200 text-yellow-900 border border-yellow-300',
+                'dikirim'  => 'bg-blue-200 text-blue-900 border border-blue-300',
+                'selesai'  => 'bg-green-200 text-green-900 border border-green-300',
+                'ditolak'  => 'bg-red-200 text-red-900 border border-red-300',
+                default    => 'bg-gray-100 text-gray-700 border border-gray-200',
+              };
+
+              $statusLabel = match($status) {
+                'menunggu' => 'Menunggu',
+                'dikemas'  => 'Dikemas',
+                'dikirim'  => 'Dikirim',
+                'selesai'  => 'Selesai',
+                'ditolak'  => 'Ditolak',
+                default    => ucfirst($status),
+              };
             @endphp
 
             <tr>
@@ -78,7 +97,7 @@
                 <div class="text-xs text-gray-500">{{ $order->user->email ?? '' }}</div>
               </td>
 
-              {{-- ✅ PRODUK (DIPERBAIKI – BISA BANYAK) --}}
+              {{-- PRODUK (BISA BANYAK) --}}
               <td class="px-4 py-3">
                 <div class="space-y-2">
                   @foreach($sellerItems as $it)
@@ -117,42 +136,20 @@
                 Rp {{ number_format((int)($order->total_bayar ?? 0), 0, ',', '.') }}
               </td>
 
-              {{-- STATUS (ASLI, TIDAK DIUBAH) --}}
+              {{-- STATUS (DIUBAH JADI BADGE SAJA) --}}
               <td class="px-4 py-3 whitespace-nowrap">
-                <form method="POST" action="{{ route('penjual.orders.masuk.status', $order->id) }}">
-                  @csrf
-                  @method('PATCH')
-                  <select name="status"
-                          class="
-                            text-xs font-semibold
-                            px-3 py-1.5
-                            rounded-md
-                            border
-                            min-w-[120px]
-                            focus:outline-none focus:ring-0
-                            appearance-none
-
-                            @if($status=='menunggu')
-                              bg-gray-200 text-gray-800 border-gray-300
-                            @elseif($status=='dikemas')
-                              bg-yellow-200 text-yellow-900 border-yellow-400
-                            @elseif($status=='dikirim')
-                              bg-blue-200 text-blue-900 border-blue-400
-                            @elseif($status=='selesai')
-                              bg-green-200 text-green-900 border-green-400
-                            @elseif($status=='ditolak')
-                              bg-red-200 text-red-900 border-red-400
-                            @endif
-                          "
-                          onchange="this.form.submit()">
-                      <option value="menunggu" @selected($status=='menunggu')>Menunggu</option>
-                      <option value="dikemas" @selected($status=='dikemas')>Dikemas</option>
-                      <option value="dikirim" @selected($status=='dikirim')>Dikirim</option>
-                      <option value="selesai" @selected($status=='selesai')>Selesai</option>
-                      <option value="ditolak" @selected($status=='ditolak')>Ditolak</option>
-                  </select>
-
-                </form>
+                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold {{ $badgeClass }}">
+                  <span class="w-2 h-2 rounded-full
+                    @if($status=='menunggu') bg-gray-500
+                    @elseif($status=='dikemas') bg-yellow-600
+                    @elseif($status=='dikirim') bg-blue-600
+                    @elseif($status=='selesai') bg-green-600
+                    @elseif($status=='ditolak') bg-red-600
+                    @else bg-gray-400
+                    @endif
+                  "></span>
+                  {{ $statusLabel }}
+                </span>
               </td>
 
               {{-- DETAIL --}}

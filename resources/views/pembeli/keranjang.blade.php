@@ -153,6 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const rupiah = n => 'Rp ' + (n || 0).toLocaleString('id-ID');
   const toast  = m => alert(m);
 
+  //mengambil elemen
   const selectedTotal = document.getElementById('selectedTotal');
   const selectedCount = document.getElementById('selectedCount');
   const form          = document.getElementById('form-checkout');
@@ -301,6 +302,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 </script>
-
 
 @endsection

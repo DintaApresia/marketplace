@@ -27,6 +27,7 @@
 
         <div class="mt-3 flex items-center gap-4">
             <div class="w-24 h-24">
+                {{-- canvas kosong buat digambar --}}
                 <canvas id="produkChart"
                     data-aktif="{{ $produkAktif }}"
                     data-nonaktif="{{ $produkNonaktif }}"></canvas>
@@ -94,6 +95,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var aktif = parseInt(produkEl.dataset.aktif || '0', 10);
         var nonaktif = parseInt(produkEl.dataset.nonaktif || '0', 10);
 
+        //yang menggambar donut
         new Chart(produkEl, {
             type: 'doughnut',
             data: {
@@ -113,6 +115,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- Pesanan bar ---
     var pesananEl = document.getElementById('pesananStatusChart');
     if (pesananEl) {
+        //diambil dari tag canvas (css)
         var dikemas = parseInt(pesananEl.dataset.dikemas || '0', 10);
         var dikirim = parseInt(pesananEl.dataset.dikirim || '0', 10);
         var selesai = parseInt(pesananEl.dataset.selesai || '0', 10);

@@ -112,8 +112,9 @@ Route::middleware(['auth', 'role:pembeli'])
         // sukses
         Route::get('/orders/{orderId}/sukses', [OrderController::class, 'sukses']) ->name('orders.sukses');
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::patch('/orders/{order}/selesai', [OrderController::class, 'selesai']) ->name('orders.selesai');
         // Aksi terima barang (tanpa lihat detail)
-        Route::patch('/orders/{order}/selesai',[OrderController::class, 'selesai'])->name('orders.selesai');
+        Route::post('/orders/{order}/aduan',[OrderController::class, 'storeAduan'])->name('orders.aduan.store');
 
         // Route::get('/orders/{order}',[OrderController::class, 'show'])->name('orders.show');
         Route::post('/orders/{order}/rating', [OrderController::class, 'storeRating'])->name('orders.rating.store');
@@ -195,6 +196,8 @@ Route::middleware(['auth', 'role:penjual'])
         Route::get('/pesanan-masuk', [OrderMasukController::class, 'index'])->name('orders.masuk');
         Route::get('/pesanan-masuk/{order}', [OrderMasukController::class, 'show'])->name('orders.masuk.show');
         Route::patch('/pesanan-masuk/{order}/status',[OrderMasukController::class, 'updateStatus'] )->name('orders.masuk.status');
+
+        Route::post('/pesanan-masuk/{order}/aduan/balas', [OrderMasukController::class,'balasAduan'])->name('orders.aduan.balas');
 
         /* ================= LAPORAN ================= */
         Route::get('/laporan', [PenjualController::class, 'laporan'])->name('laporan');

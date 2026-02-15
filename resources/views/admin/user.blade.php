@@ -158,6 +158,7 @@
       </div>
     </div>
 
+    {{-- pindah halaman data --}}
     {{-- ================= PAGINATION ================= --}}
     @if (method_exists($users, 'links'))
       <div class="mt-4">
