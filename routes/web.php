@@ -232,6 +232,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/barang/{produk}/edit', [AdminController::class, 'barangEdit'])->name('barang.edit');
     Route::patch('/barang/{produk}', [AdminController::class, 'barangUpdate'])->name('barang.update');
     Route::delete('/produk/{id}/hapus', [AdminController::class, 'hapusBarang'])->name('produk.hapus');
+
+   Route::get('/transaksi', [AdminController::class, 'manajemenTransaksi'])->name('transaksi.index');
+   Route::get('/transaksi/{id}', [AdminController::class, 'detailTransaksi'])->name('transaksi.show');
+   Route::get('/aduan/{id}', [AdminController::class, 'showAduan'])->name('aduan.show');
+   Route::post('/aduan/{id}/status', [AdminController::class, 'updateStatusAduan'])->name('aduan.updateStatus');
+   Route::post('/aduan/{id}/tanggapan', [AdminController::class, 'tanggapiAduan'])->name('aduan.tanggapi');
+
 });
 
 /*

@@ -25,6 +25,13 @@
         @php
             $active = 'bg-gray-700 text-white font-semibold';
             $normal = 'text-gray-300 hover:bg-gray-700 hover:text-white';
+
+            // submenu style: tetap satu tema (ga bikin warna baru)
+            $subActive = 'text-white font-semibold';
+            $subNormal = 'text-gray-300 hover:text-white';
+
+            $isTransaksi = request()->routeIs('admin.transaksi.index'); // route kamu
+            $tab = request('tab', 'monitoring');
         @endphp
 
         <a href="{{ route('admin.dashboard') }}"
@@ -50,6 +57,40 @@
            {{ request()->routeIs('admin.toko.show') ? $active : $normal }}">
             📦 <span>Daftar Penjual</span>
         </a>
+
+        {{-- ✅ Manajemen Transaksi + SUBMENU (mirip mockup, tema tetap) --}}
+        <div class="space-y-1">
+
+            {{-- Parent --}}
+            <a href="{{ route('admin.transaksi.index', ['tab'=>'monitoring']) }}"
+               class="flex items-center gap-3 px-4 py-2 rounded-lg transition
+               {{ $isTransaksi ? $active : $normal }}">
+                🧾 <span>Manajemen Transaksi</span>
+            </a>
+
+            {{-- Submenu: selalu tampil, tapi highlight ikut tab --}}
+            <div class="ml-10 space-y-1">
+                <a href="{{ route('admin.transaksi.index', ['tab'=>'monitoring']) }}"
+                   class="block px-2 py-1 rounded transition
+                   {{ $isTransaksi && $tab==='monitoring' ? $subActive : $subNormal }}">
+                    › Monitoring Transaksi
+                </a>
+
+                <a href="{{ route('admin.transaksi.index', ['tab'=>'aduan']) }}"
+                   class="block px-2 py-1 rounded transition
+                   {{ $isTransaksi && $tab==='aduan' ? $subActive : $subNormal }}">
+                    › Manajemen Aduan
+                </a>
+
+                <a href="{{ route('admin.transaksi.index', ['tab'=>'riwayat']) }}"
+                   class="block px-2 py-1 rounded transition
+                   {{ $isTransaksi && $tab==='riwayat' ? $subActive : $subNormal }}">
+                    › Riwayat Transaksi
+                </a>
+            </div>
+
+        </div>
+
     </nav>
 
     {{-- Logout --}}
@@ -82,7 +123,7 @@
         </div>
     </header>
 
-    {{-- CONTENT (YANG SCROLL KE BAWAH) --}}
+    {{-- CONTENT --}}
     <main class="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">
         @yield('content')
     </main>
@@ -97,11 +138,43 @@
                   transform -translate-x-full transition-transform duration-300">
         <button id="closeSidebar" class="text-gray-400 mb-4">✕ Tutup</button>
 
+        @php
+            $isTransaksiMobile = request()->routeIs('admin.transaksi.index');
+            $tabMobile = request('tab', 'monitoring');
+        @endphp
+
         <nav class="space-y-2 text-sm">
             <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 rounded hover:bg-gray-700">Dashboard</a>
             <a href="{{ route('admin.user') }}" class="block px-4 py-2 rounded hover:bg-gray-700">Kelola User</a>
             <a href="{{ route('admin.penjual') }}" class="block px-4 py-2 rounded hover:bg-gray-700">Verifikasi Penjual</a>
             <a href="{{ route('admin.toko.show') }}" class="block px-4 py-2 rounded hover:bg-gray-700">Daftar Penjual</a>
+
+            {{-- Parent --}}
+            <a href="{{ route('admin.transaksi.index', ['tab'=>'monitoring']) }}"
+               class="block px-4 py-2 rounded hover:bg-gray-700">
+                Manajemen Transaksi
+            </a>
+
+            {{-- Submenu (selalu tampil) --}}
+            <div class="ml-4 space-y-1">
+                <a href="{{ route('admin.transaksi.index', ['tab'=>'monitoring']) }}"
+                   class="block px-4 py-1 rounded hover:bg-gray-700
+                   {{ $isTransaksiMobile && $tabMobile==='monitoring' ? 'text-white font-semibold' : 'text-gray-300' }}">
+                    › Monitoring Transaksi
+                </a>
+
+                <a href="{{ route('admin.transaksi.index', ['tab'=>'aduan']) }}"
+                   class="block px-4 py-1 rounded hover:bg-gray-700
+                   {{ $isTransaksiMobile && $tabMobile==='aduan' ? 'text-white font-semibold' : 'text-gray-300' }}">
+                    › Manajemen Aduan
+                </a>
+
+                <a href="{{ route('admin.transaksi.index', ['tab'=>'riwayat']) }}"
+                   class="block px-4 py-1 rounded hover:bg-gray-700
+                   {{ $isTransaksiMobile && $tabMobile==='riwayat' ? 'text-white font-semibold' : 'text-gray-300' }}">
+                    › Riwayat Transaksi
+                </a>
+            </div>
         </nav>
 
         <div class="mt-6 pt-4 border-t border-gray-700">

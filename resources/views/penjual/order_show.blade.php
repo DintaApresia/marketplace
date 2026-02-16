@@ -89,12 +89,73 @@
   @endphp
 
   {{-- GRID: KIRI (detail+rating) | KANAN (status+timeline+aduan) --}}
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+  {{-- Dibuat lebih rapi: kanan dibuat "sticky" + scroll internal supaya tidak bikin halaman terasa kepanjangan,
+      dan kiri diisi ringkasan total agar tidak terasa kosong. Fungsionalitas tidak diubah. --}}
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
 
     {{-- =========================
-        KIRI: DETAIL PRODUK + RATING (punyamu, tidak diubah fungsinya)
+        KIRI: DETAIL PRODUK + RATING
     ========================= --}}
-    <div class="lg:col-span-2 space-y-4">
+    <div class="lg:col-span-3 space-y-4">
+
+      {{-- RINGKASAN ORDER (biar kiri ga kosong) --}}
+      @php
+        $totalSeller = 0;
+        foreach ($itemsSeller as $it) {
+          $p = $it->produk;
+          $hargaTmp  = (int) ($it->harga ?? $p?->harga ?? 0);
+          $qtyTmp    = (int) ($it->jumlah ?? $it->qty ?? $it->quantity ?? 0);
+          $subTmp    = (int) ($it->subtotal ?? ($hargaTmp * $qtyTmp));
+          $totalSeller += $subTmp;
+        }
+        $metode = $order->metode_pembayaran ?? '-';
+      @endphp
+
+      <div class="bg-white rounded-lg shadow p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-sm text-gray-600">Ringkasan Pesanan</div>
+            <div class="text-xs text-gray-500">Informasi singkat untuk order ini.</div>
+          </div>
+          <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold {{ $badgeClass }}">
+            {{ ucfirst($status) }}
+          </span>
+        </div>
+
+        <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+          <div class="border rounded-lg p-3">
+            <div class="text-xs text-gray-500">Metode Pembayaran</div>
+            <div class="font-semibold text-gray-800 mt-0.5">{{ strtoupper($metode) }}</div>
+          </div>
+          <div class="border rounded-lg p-3">
+            <div class="text-xs text-gray-500">Jumlah Item (produk kamu)</div>
+            <div class="font-semibold text-gray-800 mt-0.5">{{ $itemsSeller->count() }}</div>
+          </div>
+          <div class="border rounded-lg p-3">
+            <div class="text-xs text-gray-500">Total (produk kamu)</div>
+            <div class="font-semibold text-gray-800 mt-0.5">Rp {{ number_format($totalSeller, 0, ',', '.') }}</div>
+          </div>
+        </div>
+
+        @if($order->metode_pembayaran === 'transfer')
+          <div class="mt-3 border-t pt-3 flex items-center justify-between gap-3">
+            <div>
+              <div class="text-xs text-gray-500">Bukti Pembayaran</div>
+              <div class="text-sm text-gray-700">Klik gambar untuk lihat ukuran penuh.</div>
+            </div>
+
+            @if(!empty($order->bukti_pembayaran))
+              <a href="{{ asset('storage/'.$order->bukti_pembayaran) }}" target="_blank"
+                 class="block w-14 h-14 rounded-xl overflow-hidden bg-gray-100 border hover:opacity-90 flex-shrink-0">
+                <img src="{{ asset('storage/'.$order->bukti_pembayaran) }}"
+                     class="w-full h-full object-cover" alt="Bukti Pembayaran">
+              </a>
+            @else
+              <span class="text-xs text-red-500 italic">Belum diupload</span>
+            @endif
+          </div>
+        @endif
+      </div>
 
       {{-- CARD DETAIL PRODUK + RATING (JADI SATU) --}}
       <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -288,201 +349,213 @@
 
     {{-- =========================
         KANAN: STATUS + TIMELINE + ADUAN
+        Dibuat sticky + scroll internal agar tidak "kepanjangan"
     ========================= --}}
-    <div class="space-y-4">
+    <div class="lg:col-span-2 space-y-4 lg:sticky lg:top-6">
+      <div class="space-y-4 max-h-[calc(100vh-6.5rem)] overflow-auto pr-1">
 
-      {{-- STATUS + TIMESTAMP + TIMELINE --}}
-      <div class="bg-white rounded-lg shadow p-4">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <div class="text-sm text-gray-600">Status Pesanan</div>
-            <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold {{ $badgeClass }}">
-              {{ ucfirst($status) }}
-            </span>
-          </div>
-
-          @if($canEdit)
-            <form method="POST" action="{{ route('penjual.orders.masuk.status', $order->id) }}" class="flex items-center gap-2">
-              @csrf
-              @method('PATCH')
-
-              <select name="status" class="text-sm border rounded-md px-3 py-1.5">
-                @if($status == 'menunggu')
-                  <option value="menunggu" selected>Menunggu</option>
-                  <option value="dikemas">Dikemas</option>
-                  <option value="ditolak">Ditolak</option>
-                @elseif($status == 'dikemas')
-                  <option value="dikemas" selected>Dikemas</option>
-                  <option value="dikirim">Dikirim</option>
-                  <option value="ditolak">Ditolak</option>
-                @elseif($status == 'dikirim')
-                  <option value="dikirim" selected>Dikirim</option>
-                @endif
-              </select>
-
-              <button type="submit" class="px-3 py-1.5 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">
-                Simpan
-              </button>
-            </form>
-          @endif
-        </div>
-
-        {{-- Timestamp per status --}}
-        <div class="mt-4 space-y-2 text-sm">
-          <div class="flex justify-between border rounded-md px-3 py-2">
-            <span class="text-gray-600">Menunggu</span>
-            <span class="font-medium text-gray-800">{{ $tsMenunggu ? $tsMenunggu->format('d M Y, H:i') : '—' }}</span>
-          </div>
-          <div class="flex justify-between border rounded-md px-3 py-2">
-            <span class="text-gray-600">Dikemas</span>
-            <span class="font-medium text-gray-800">{{ $tsDikemas ? $tsDikemas->format('d M Y, H:i') : '—' }}</span>
-          </div>
-          <div class="flex justify-between border rounded-md px-3 py-2">
-            <span class="text-gray-600">Dikirim</span>
-            <span class="font-medium text-gray-800">{{ $tsDikirim ? $tsDikirim->format('d M Y, H:i') : '—' }}</span>
-          </div>
-          <div class="flex justify-between border rounded-md px-3 py-2">
-            <span class="text-gray-600">Selesai</span>
-            <span class="font-medium text-gray-800">{{ $tsSelesai ? $tsSelesai->format('d M Y, H:i') : '—' }}</span>
-          </div>
-          <div class="flex justify-between border rounded-md px-3 py-2">
-            <span class="text-gray-600">Ditolak</span>
-            <span class="font-medium text-gray-800">{{ $tsDitolak ? $tsDitolak->format('d M Y, H:i') : '—' }}</span>
-          </div>
-        </div>
-
-        {{-- Timeline --}}
-        <div class="mt-4">
-          <div class="text-sm font-semibold text-gray-800 mb-2">Timeline</div>
-
-          @if($logs->isEmpty())
-            <div class="text-sm text-gray-500">Belum ada riwayat status.</div>
-          @else
-            <ol class="space-y-2">
-              @foreach($logs as $log)
-                <li class="flex items-start gap-3">
-                  <div class="mt-1 w-2.5 h-2.5 rounded-full bg-gray-400"></div>
-                  <div class="text-sm">
-                    <div class="font-medium text-gray-800">
-                      {{ ucfirst($log->status) }}
-                      <span class="text-xs text-gray-500">• {{ $log->created_at->format('d M Y, H:i') }}</span>
-                    </div>
-
-                    @if($log->actor_role)
-                      <div class="text-xs text-gray-400">oleh {{ $log->actor_role }}</div>
-                    @endif
-
-                    @if($log->catatan)
-                      <div class="text-xs text-gray-500">{{ $log->catatan }}</div>
-                    @endif
-                  </div>
-                </li>
-              @endforeach
-            </ol>
-          @endif
-        </div>
-      </div>
-
-      {{-- ADUAN --}}
-      <div class="bg-white rounded-lg shadow p-4">
-        <div class="flex items-center justify-between">
-          <h2 class="font-semibold text-gray-800">Aduan Pesanan</h2>
-
-          @if(!empty($aduan))
-            <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
-              Status: {{ $aduan->status_aduan ?? 'baru' }}
-            </span>
-          @endif
-        </div>
-
-        @if(empty($aduan))
-          <p class="text-sm text-gray-600 mt-2">
-            Belum ada aduan dari pembeli untuk pesanan ini.
-          </p>
-        @else
-          <div class="mt-4 space-y-4">
-
-            {{-- PESAN PEMBELI (rata kiri) --}}
-            <div class="text-left">
-              <div class="max-w-full bg-gray-100 rounded-2xl px-4 py-3 text-sm text-gray-800">
-                <div class="text-xs text-gray-500 mb-1">
-                  PEMBELI • {{ optional($aduan->created_at)->format('d M Y, H:i') }}
-                </div>
-                <div class="font-semibold">{{ $aduan->judul }}</div>
-                <div class="mt-1 whitespace-pre-line">{{ $aduan->deskripsi }}</div>
-
-                {{-- Bukti --}}
-                @if(!empty($aduan->bukti))
-                  @php
-                    $imgsAduan = is_array($aduan->bukti) ? $aduan->bukti : json_decode($aduan->bukti, true);
-                  @endphp
-
-                  @if(!empty($imgsAduan))
-                    <div class="mt-3 flex flex-wrap gap-2">
-                      @foreach($imgsAduan as $img)
-                        <a href="{{ asset('storage/'.$img) }}" target="_blank">
-                          <img src="{{ asset('storage/'.$img) }}"
-                               class="w-16 h-16 rounded-xl object-cover border" alt="">
-                        </a>
-                      @endforeach
-                    </div>
-                  @endif
-                @endif
-              </div>
+        {{-- STATUS + TIMESTAMP + TIMELINE --}}
+        <div class="bg-white rounded-lg shadow p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="text-sm text-gray-600">Status Pesanan</div>
+              <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold {{ $badgeClass }}">
+                {{ ucfirst($status) }}
+              </span>
             </div>
 
-            {{-- BALASAN ADMIN --}}
-            @if(!empty($aduan->catatan_admin))
-              <div class="text-left">
-                <div class="max-w-full bg-white border rounded-2xl px-4 py-3 text-sm text-gray-800">
-                  <div class="text-xs text-gray-500 mb-1">
-                    ADMIN • {{ optional($aduan->tgl_catatan_admin)->format('d M Y, H:i') }}
-                  </div>
-                  <div class="whitespace-pre-line">{{ $aduan->catatan_admin }}</div>
-                </div>
-              </div>
-            @endif
-
-            {{-- BALASAN PENJUAL (yang sudah ada) --}}
-            @if(!empty($aduan->catatan_penjual))
-              <div class="text-left">
-                <div class="max-w-full bg-green-50 border border-green-100 rounded-2xl px-4 py-3 text-sm text-gray-800">
-                  <div class="text-xs text-gray-500 mb-1">
-                    PENJUAL • {{ optional($aduan->tgl_catatan_penjual)->format('d M Y, H:i') }}
-                  </div>
-                  <div class="whitespace-pre-line">{{ $aduan->catatan_penjual }}</div>
-                </div>
-              </div>
-            @endif
-
-            {{-- FORM BALAS (PENJUAL) --}}
-            <div class="border-t pt-3">
-              <form method="POST" action="{{ route('penjual.orders.aduan.balas', $order->id) }}" class="space-y-2">
+            @if($canEdit)
+              <form method="POST" action="{{ route('penjual.orders.masuk.status', $order->id) }}" class="flex items-center gap-2">
                 @csrf
+                @method('PATCH')
 
-                <label class="text-sm font-medium text-gray-700">Balas Aduan</label>
-                <textarea name="catatan_penjual" rows="3"
-                          class="w-full border rounded-xl px-3 py-2 text-sm"
-                          placeholder="Tulis balasan untuk pembeli...">{{ old('catatan_penjual') }}</textarea>
+                <select name="status" class="text-sm border rounded-md px-3 py-1.5">
+                  @if($status == 'menunggu')
+                    <option value="menunggu" selected>Menunggu</option>
+                    <option value="dikemas">Dikemas</option>
+                    <option value="ditolak">Ditolak</option>
+                  @elseif($status == 'dikemas')
+                    <option value="dikemas" selected>Dikemas</option>
+                    <option value="dikirim">Dikirim</option>
+                    <option value="ditolak">Ditolak</option>
+                  @elseif($status == 'dikirim')
+                    <option value="dikirim" selected>Dikirim</option>
+                  @endif
+                </select>
 
-                @error('catatan_penjual')
-                  <p class="text-sm text-red-600">{{ $message }}</p>
-                @enderror
-
-                <div class="flex justify-end">
-                  <button type="submit"
-                          class="px-4 py-2 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700">
-                    Kirim Balasan
-                  </button>
-                </div>
+                <button type="submit" class="px-3 py-1.5 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">
+                  Simpan
+                </button>
               </form>
-            </div>
-
+            @endif
           </div>
-        @endif
-      </div>
 
+          {{-- Timestamp per status (lebih rapat) --}}
+          <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+            <div class="flex justify-between border rounded-md px-3 py-2">
+              <span class="text-gray-600">Menunggu</span>
+              <span class="font-medium text-gray-800">{{ $tsMenunggu ? $tsMenunggu->format('d M Y, H:i') : '—' }}</span>
+            </div>
+            <div class="flex justify-between border rounded-md px-3 py-2">
+              <span class="text-gray-600">Dikemas</span>
+              <span class="font-medium text-gray-800">{{ $tsDikemas ? $tsDikemas->format('d M Y, H:i') : '—' }}</span>
+            </div>
+            <div class="flex justify-between border rounded-md px-3 py-2">
+              <span class="text-gray-600">Dikirim</span>
+              <span class="font-medium text-gray-800">{{ $tsDikirim ? $tsDikirim->format('d M Y, H:i') : '—' }}</span>
+            </div>
+            <div class="flex justify-between border rounded-md px-3 py-2">
+              <span class="text-gray-600">Selesai</span>
+              <span class="font-medium text-gray-800">{{ $tsSelesai ? $tsSelesai->format('d M Y, H:i') : '—' }}</span>
+            </div>
+            <div class="flex justify-between border rounded-md px-3 py-2 sm:col-span-2">
+              <span class="text-gray-600">Ditolak</span>
+              <span class="font-medium text-gray-800">{{ $tsDitolak ? $tsDitolak->format('d M Y, H:i') : '—' }}</span>
+            </div>
+          </div>
+
+          {{-- Timeline (dibatasi tinggi biar ga memanjang) --}}
+          <div class="mt-4">
+            <div class="text-sm font-semibold text-gray-800 mb-2">Timeline</div>
+
+            @if($logs->isEmpty())
+              <div class="text-sm text-gray-500">Belum ada riwayat status.</div>
+            @else
+              <ol class="space-y-2 max-h-40 overflow-auto pr-1">
+                @foreach($logs as $log)
+                  <li class="flex items-start gap-3">
+                    <div class="mt-1 w-2.5 h-2.5 rounded-full bg-gray-400"></div>
+                    <div class="text-sm">
+                      <div class="font-medium text-gray-800">
+                        {{ ucfirst($log->status) }}
+                        <span class="text-xs text-gray-500">• {{ $log->created_at->format('d M Y, H:i') }}</span>
+                      </div>
+
+                      @if($log->actor_role)
+                        <div class="text-xs text-gray-400">oleh {{ $log->actor_role }}</div>
+                      @endif
+
+                      @if($log->catatan)
+                        <div class="text-xs text-gray-500">{{ $log->catatan }}</div>
+                      @endif
+                    </div>
+                  </li>
+                @endforeach
+              </ol>
+            @endif
+          </div>
+        </div>
+
+        {{-- ADUAN --}}
+        <div class="bg-white rounded-lg shadow p-4">
+          <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-gray-800">Aduan Pesanan</h2>
+
+            @if(!empty($aduan))
+              <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                Status: {{ $aduan->status_aduan ?? 'baru' }}
+              </span>
+            @endif
+          </div>
+
+          @if(empty($aduan))
+            <p class="text-sm text-gray-600 mt-2">
+              Belum ada aduan dari pembeli untuk pesanan ini.
+            </p>
+          @else
+            <div class="mt-4 space-y-4">
+
+              {{-- PESAN PEMBELI (rata kiri) --}}
+              <div class="text-left">
+                <div class="max-w-full bg-gray-100 rounded-2xl px-4 py-3 text-sm text-gray-800">
+                  <div class="text-xs text-gray-500 mb-1">
+                    PEMBELI • {{ optional($aduan->created_at)->format('d M Y, H:i') }}
+                  </div>
+                  <div class="font-semibold">{{ $aduan->judul }}</div>
+                  <div class="mt-1 whitespace-pre-line">{{ $aduan->deskripsi }}</div>
+
+                  {{-- Bukti --}}
+                  @if(!empty($aduan->bukti))
+                    @php
+                      $imgsAduan = is_array($aduan->bukti) ? $aduan->bukti : json_decode($aduan->bukti, true);
+                    @endphp
+
+                    @if(!empty($imgsAduan))
+                      <div class="mt-3 flex flex-wrap gap-2">
+                        @foreach($imgsAduan as $img)
+                          <a href="{{ asset('storage/'.$img) }}" target="_blank">
+                            <img src="{{ asset('storage/'.$img) }}"
+                                 class="w-16 h-16 rounded-xl object-cover border" alt="">
+                          </a>
+                        @endforeach
+                      </div>
+                    @endif
+                  @endif
+                </div>
+              </div>
+
+              {{-- BALASAN ADMIN --}}
+              @if(!empty($aduan->catatan_admin))
+                <div class="text-left">
+                  <div class="max-w-full bg-white border rounded-2xl px-4 py-3 text-sm text-gray-800">
+                    <div class="text-xs text-gray-500 mb-1">
+                      ADMIN • {{ optional($aduan->tgl_catatan_admin)->format('d M Y, H:i') }}
+                    </div>
+                    <div class="whitespace-pre-line">{{ $aduan->catatan_admin }}</div>
+                  </div>
+                </div>
+              @endif
+
+              {{-- BALASAN PENJUAL (yang sudah ada) --}}
+              @if(isset($aduan->catatan_penjual) && trim($aduan->catatan_penjual) !== '')
+                <div class="text-left">
+                  <div class="max-w-full bg-green-50 border border-green-100 rounded-2xl px-4 py-3 text-sm text-gray-800">
+                    <div class="text-xs text-gray-500 mb-1">
+                      PENJUAL • {{ optional($aduan->tgl_catatan_penjual)->format('d M Y, H:i') }}
+                    </div>
+                    <div class="whitespace-pre-line">{{ $aduan->catatan_penjual }}</div>
+                  </div>
+                </div>
+              @endif
+
+              {{-- FORM BALAS (PENJUAL) --}}
+              @if(!isset($aduan->catatan_penjual) || trim($aduan->catatan_penjual) === '')
+                <div class="border-t pt-3">
+                  <form method="POST" action="{{ route('penjual.orders.aduan.balas', $order->id) }}" class="space-y-2">
+                    @csrf
+
+                    <label class="text-sm font-medium text-gray-700">Balas Aduan</label>
+                    <textarea name="catatan_penjual" rows="3"
+                              class="w-full border rounded-xl px-3 py-2 text-sm"
+                              placeholder="Tulis balasan untuk pembeli...">{{ old('catatan_penjual') }}</textarea>
+
+                    @error('catatan_penjual')
+                      <p class="text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+
+                    <div class="flex justify-end">
+                      <button type="submit"
+                              class="px-4 py-2 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700">
+                        Kirim Balasan
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              @else
+                <div class="border-t pt-3">
+                  <div class="text-xs text-gray-500">
+                    Kamu sudah membalas aduan ini. Balasan di atas sudah ditampilkan.
+                  </div>
+                </div>
+              @endif
+
+            </div>
+          @endif
+        </div>
+
+      </div>
     </div>
+
   </div>
 
   {{-- KEMBALI --}}

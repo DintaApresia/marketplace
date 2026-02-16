@@ -48,29 +48,28 @@ class OrderMasukController extends Controller
         // ✅ AMBIL ADUAN UNTUK ORDER INI
         $aduan = Aduan::where('order_id', $order->id)
             ->where('penjual_id', $penjualId)   // biar aman kalau ada edge-case
-            ->latest()
+            ->latest('id')
             ->first();
 
         return view('penjual.order_show', compact('order', 'itemsSeller', 'aduan'));
     }
-    public function balasAduan(Request $request, Order $order)
+    public function balasAduan(Request $request, $orderId)
     {
-        $penjualId = auth()->user()->penjual->id;
-        abort_unless((int)$order->penjual_id === (int)$penjualId, 403);
-
-        $data = $request->validate([
+        $request->validate([
             'catatan_penjual' => 'required|string|max:2000',
         ]);
 
-        $aduan = Aduan::where('order_id', $order->id)->firstOrFail();
+        $penjualId = auth()->user()->penjual->id;
 
-        $aduan->update([
-            'catatan_penjual' => $data['catatan_penjual'],
-            'tgl_catatan_penjual' => now(),
-            'last_actor_role' => 'penjual',
-            'last_actor_id' => auth()->id(),
-            'status_aduan' => 'diproses',
-        ]);
+        // samakan dengan show(): ambil aduan terbaru untuk order ini + penjual ini
+        $aduan = Aduan::where('order_id', $orderId)
+            ->where('penjual_id', $penjualId)
+            ->latest('id')
+            ->firstOrFail();
+
+        $aduan->catatan_penjual = $request->catatan_penjual;
+        $aduan->tgl_catatan_penjual = now();
+        $aduan->save();
 
         return back()->with('success', 'Balasan aduan berhasil dikirim.');
     }

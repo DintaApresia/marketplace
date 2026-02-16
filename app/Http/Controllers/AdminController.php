@@ -9,6 +9,8 @@ use App\Models\Penjual;
 use App\Models\Produk;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AdminController extends Controller
 {
@@ -96,38 +98,6 @@ class AdminController extends Controller
         return view('admin.user', compact('users'));
     }
 
-    public function editUser(User $user)
-    {
-        return view('admin.user_edit', compact('user'));
-    }
-
-    public function updateUser(Request $request, User $user)
-    {
-        $validated = $request->validate([
-            'name' => ['required','string','max:255'],
-            'role' => ['required', Rule::in(['admin','penjual','pembeli'])],
-            'seller_status' => ['required', Rule::in(['none','pending','verified','rejected'])],
-            'password' => ['nullable','string','min:8','confirmed'],
-        ]);
-
-        // update field WAJIB
-        $user->name = $validated['name'];
-        $user->role = $validated['role'];
-        $user->seller_status = $validated['seller_status'];
-
-        // 🔐 password hanya diupdate kalau DIISI
-        if ($request->filled('password')) {
-            $user->password = Hash::make($validated['password']);
-        }
-
-        $user->save();
-
-        return redirect()
-            ->route('admin.user', $user->id)
-            ->with('success', 'User berhasil diperbarui.');
-    }
-
-
     public function deleteUser(User $user)
     {
         // proteksi: admin tidak bisa hapus dirinya sendiri
@@ -157,39 +127,6 @@ class AdminController extends Controller
 
         return view('admin.barang', compact('barangs', 'q', 'penjualId'));
     }
-
-    public function barangEdit(Produk $produk)
-    {
-        $user = $produk->user_id;
-        return view('admin.barang_edit', compact('produk', 'user'));
-    }
-
-
-    public function barangUpdate(Request $request, Produk $produk)
-    {
-        $validated = $request->validate([
-            'nama_barang' => 'required|string|max:255',
-            'deskripsi'   => 'required|string',
-            'harga'       => 'required|numeric|min:0',
-            'stok'        => 'required|integer|min:0',
-            'is_active'   => 'required|boolean',
-            // gambar opsional:
-            'gambar'      => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
-
-        // kalau upload gambar baru
-        if ($request->hasFile('gambar')) {
-            $path = $request->file('gambar')->store('produk', 'public');
-            $validated['gambar'] = $path;
-        }
-
-        $produk->update($validated);
-
-        return redirect()
-            ->route('admin.toko.barang', $produk->user_id)
-            ->with('success', 'Barang berhasil diperbarui.');
-    }
-
     public function hapusBarang($id)
     {
         $produk = Produk::findOrFail($id);
@@ -218,5 +155,422 @@ class AdminController extends Controller
             ->route('admin.toko.barang', $userId)
             ->with('success', 'Produk berhasil dihapus.');
     }
+
+    public function detailTransaksi(Request $request, $id)
+    {
+        // kolom pasti di orders kamu
+        $orderStatusCol = Schema::hasColumn('orders', 'status_pesanan') ? 'status_pesanan'
+            : (Schema::hasColumn('orders', 'status_pesanna') ? 'status_pesanna' : 'status_pesanan');
+
+        // kolom opsional
+        $orderKodeCol   = Schema::hasColumn('orders', 'kode_order') ? 'kode_order' : null;
+
+        $orderTotalCol  = Schema::hasColumn('orders', 'total_bayar') ? 'total_bayar'
+            : (Schema::hasColumn('orders', 'total') ? 'total'
+            : (Schema::hasColumn('orders', 'total_harga') ? 'total_harga' : null));
+
+        $orderMetodeCol = Schema::hasColumn('orders', 'metode_pembayaran') ? 'metode_pembayaran'
+            : (Schema::hasColumn('orders', 'payment_method') ? 'payment_method' : null);
+
+        // ==== ORDER (dual-mode join penjual) ====
+        $order = DB::table('orders as o')
+            ->leftJoin('users as pembeli', 'pembeli.id', '=', 'o.user_id')
+
+            // dual-mode: o.penjual_id bisa user_id atau penjuals.id
+            ->leftJoin('penjuals as pj', function ($join) {
+                $join->on('pj.user_id', '=', 'o.penjual_id')
+                    ->orOn('pj.id', '=', 'o.penjual_id');
+            })
+
+            // ambil identitas penjual dari users berdasarkan pj.user_id
+            ->leftJoin('users as penjual', 'penjual.id', '=', 'pj.user_id')
+
+            ->where('o.id', $id)
+            ->select([
+                'o.id',
+                'o.user_id',
+                'o.penjual_id',
+                'o.created_at',
+                'o.updated_at',
+                "o.$orderStatusCol as status_pesanan",
+
+                // pembeli
+                'pembeli.name as pembeli_nama',
+                'pembeli.email as pembeli_email',
+
+                // penjual (toko + user)
+                'pj.nama_toko as nama_toko',
+                'penjual.name as penjual_nama',
+                'penjual.email as penjual_email',
+
+                // penjual_user_id untuk ditampilkan (biar jelas)
+                DB::raw('pj.user_id as penjual_user_id'),
+            ])
+            ->when($orderKodeCol, fn($q) => $q->addSelect("o.$orderKodeCol as kode_order"))
+            ->when($orderTotalCol, fn($q) => $q->addSelect("o.$orderTotalCol as total"))
+            ->when($orderMetodeCol, fn($q) => $q->addSelect("o.$orderMetodeCol as metode_pembayaran"))
+            ->first();
+
+        abort_if(!$order, 404);
+
+        // ==== LOGS ====
+        $logCols = Schema::getColumnListing('order_status_logs');
+        $logsQuery = DB::table('order_status_logs')
+            ->where('order_id', $id)
+            ->orderBy('created_at');
+
+        $logsQuery->addSelect(in_array('status', $logCols) ? 'status' : DB::raw("NULL as status"));
+
+        if (in_array('catatan', $logCols)) {
+            $logsQuery->addSelect('catatan');
+        } elseif (in_array('keterangan', $logCols)) {
+            $logsQuery->addSelect(DB::raw("keterangan as catatan"));
+        } else {
+            $logsQuery->addSelect(DB::raw("NULL as catatan"));
+        }
+
+        $logsQuery->addSelect('created_at');
+        $logs = $logsQuery->get();
+
+        // ==== TANGGAL SELESAI (riwayat / order lama) ====
+        $tglSelesai = $logs->count()
+            ? optional($logs->last())->created_at
+            : ($order->updated_at ?? null);
+
+        // ==== ADUAN terkait ====
+        $aduanCols = Schema::getColumnListing('aduans');
+
+        $aduanSelect = ['id','judul','deskripsi','created_at','status_aduan'];
+        if (in_array('catatan_penjual', $aduanCols)) $aduanSelect[] = 'catatan_penjual';
+        if (in_array('tgl_catatan_penjual', $aduanCols)) $aduanSelect[] = 'tgl_catatan_penjual';
+        if (in_array('catatan_admin', $aduanCols)) $aduanSelect[] = 'catatan_admin';
+        if (in_array('tgl_catatan_admin', $aduanCols)) $aduanSelect[] = 'tgl_catatan_admin';
+
+        $aduans = DB::table('aduans')
+            ->where('order_id', $id)
+            ->select($aduanSelect)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('admin.transaksi_show', [
+            'order' => $order,
+            'logs' => $logs,
+            'aduans' => $aduans,
+
+            // untuk tombol kembali
+            'from' => $request->get('from'),
+            'fromTab' => $request->get('from', 'monitoring'),
+            'aduanId' => $request->get('aduan_id'),
+
+            // untuk tampil "tanggal selesai"
+            'tglSelesai' => $tglSelesai,
+        ]);
+    }
+
+    public function manajemenTransaksi(Request $request)
+    {
+        $tab = $request->get('tab', 'monitoring');
+        if (!in_array($tab, ['monitoring', 'aduan', 'riwayat'])) $tab = 'monitoring';
+
+        $q = trim((string) $request->get('q'));
+
+        $penjualId = $request->get('penjual_id');
+        $status    = $request->get('status');
+        $start     = $request->get('start');
+        $end       = $request->get('end');
+
+        // status order (aman jika ada typo status_pesanna)
+        if (\Schema::hasColumn('orders', 'status_pesanan')) {
+            $orderStatusCol = 'status_pesanan';
+        } elseif (\Schema::hasColumn('orders', 'status_pesanna')) {
+            $orderStatusCol = 'status_pesanna';
+        } else {
+            $orderStatusCol = 'status_pesanan';
+        }
+
+        $orderKodeCol  = \Schema::hasColumn('orders', 'kode_order') ? 'kode_order' : null;
+
+        $orderTotalCol = \Schema::hasColumn('orders', 'total_bayar') ? 'total_bayar'
+            : (\Schema::hasColumn('orders', 'total') ? 'total'
+            : (\Schema::hasColumn('orders', 'total_harga') ? 'total_harga' : null));
+
+        $aduanStatusCol = \Schema::hasColumn('aduans', 'status_aduan') ? 'status_aduan'
+            : (\Schema::hasColumn('aduans', 'status') ? 'status' : null);
+
+        $aktifStatuses   = ['menunggu', 'diproses', 'dikemas', 'dikirim'];
+        $riwayatStatuses = ['selesai', 'dibatalkan'];
+
+        $lastLogSub = \DB::table('order_status_logs')
+            ->select('order_id', \DB::raw('MAX(created_at) as last_status_at'))
+            ->groupBy('order_id');
+
+        // dropdown penjual (pakai penjuals biar tampil nama_toko)
+        $penjualList = \DB::table('penjuals as pj')
+            ->select('pj.user_id as id', 'pj.nama_toko')
+            ->orderBy('pj.nama_toko')
+            ->get();
+
+        if ($penjualList->count() === 0) {
+            $penjualList = \DB::table('users')
+                ->select('id', \DB::raw("name as nama_toko"))
+                ->orderBy('name')
+                ->get();
+        }
+
+        $orders = null;
+        $aduans = null;
+
+        if ($tab === 'monitoring' || $tab === 'riwayat') {
+
+            $ordersQuery = \DB::table('orders as o')
+                ->leftJoin('users as ub', 'ub.id', '=', 'o.user_id') // pembeli
+
+                // fallback penjual user
+                ->leftJoin('users as up', 'up.id', '=', 'o.penjual_id')
+
+                // dual-mode: penjual_id bisa users.id / penjuals.id
+                ->leftJoin('penjuals as pj', function ($join) {
+                    $join->on('pj.user_id', '=', 'o.penjual_id')
+                        ->orOn('pj.id', '=', 'o.penjual_id');
+                })
+
+                ->leftJoinSub($lastLogSub, 'osl_last', function ($join) {
+                    $join->on('osl_last.order_id', '=', 'o.id');
+                })
+
+                ->select([
+                    'o.id',
+                    'o.user_id',
+                    'o.penjual_id',
+                    'o.created_at',
+
+                    // ✅ PENTING: BIAR BISA FALLBACK ORDER LAMA
+                    'o.updated_at',
+
+                    "o.$orderStatusCol as status_pesanan",
+                    'osl_last.last_status_at',
+
+                    // ✅ tanggal selesai: pakai last_status_at, kalau kosong pakai updated_at
+                    \DB::raw('COALESCE(osl_last.last_status_at, o.updated_at) as tanggal_selesai'),
+
+                    'ub.name as pembeli_nama',
+                    \DB::raw("COALESCE(pj.nama_toko, up.name, '-') as nama_toko"),
+                ]);
+
+            if ($orderKodeCol)  $ordersQuery->addSelect("o.$orderKodeCol as kode_order");
+            if ($orderTotalCol) $ordersQuery->addSelect("o.$orderTotalCol as total");
+
+            // filter status per tab
+            if ($tab === 'monitoring') {
+                $ordersQuery->whereIn("o.$orderStatusCol", $aktifStatuses);
+            } else {
+                $ordersQuery->whereIn("o.$orderStatusCol", $riwayatStatuses);
+            }
+
+            // filter penjual (dropdown kirim user_id penjual)
+            if (!empty($penjualId)) {
+                $ordersQuery->where(function ($w) use ($penjualId) {
+                    $w->where('o.penjual_id', $penjualId)
+                    ->orWhere('pj.user_id', $penjualId);
+                });
+            }
+
+            // filter status
+            if (!empty($status)) {
+                $ordersQuery->where("o.$orderStatusCol", $status);
+            }
+
+            // filter tanggal (created_at)
+            if (!empty($start)) $ordersQuery->whereDate('o.created_at', '>=', $start);
+            if (!empty($end))   $ordersQuery->whereDate('o.created_at', '<=', $end);
+
+            // search
+            if ($q !== '') {
+                $ordersQuery->where(function ($w) use ($q, $orderKodeCol) {
+                    if ($orderKodeCol) $w->where("o.$orderKodeCol", 'like', "%{$q}%");
+                    $w->orWhere('ub.name', 'like', "%{$q}%")
+                    ->orWhere('pj.nama_toko', 'like', "%{$q}%")
+                    ->orWhere('up.name', 'like', "%{$q}%");
+                });
+            }
+
+            $orders = $ordersQuery
+                ->orderByDesc(\DB::raw('COALESCE(osl_last.last_status_at, o.updated_at, o.created_at)'))
+                ->paginate(10)
+                ->withQueryString();
+
+        } else {
+
+            // TAB aduan
+            $aduansQuery = \DB::table('aduans as a')
+                ->join('orders as o', 'o.id', '=', 'a.order_id')
+                ->leftJoin('users as ub', 'ub.id', '=', 'a.user_id')
+
+                ->leftJoin('users as up', 'up.id', '=', 'o.penjual_id')
+                ->leftJoin('penjuals as pj', function ($join) {
+                    $join->on('pj.user_id', '=', 'o.penjual_id')
+                        ->orOn('pj.id', '=', 'o.penjual_id');
+                })
+
+                ->leftJoinSub($lastLogSub, 'osl_last', function ($join) {
+                    $join->on('osl_last.order_id', '=', 'o.id');
+                })
+
+                ->select([
+                    'a.id',
+                    'a.order_id',
+                    'a.judul',
+                    'a.deskripsi',
+                    'a.created_at',
+                    "o.$orderStatusCol as status_pesanan",
+                    'osl_last.last_status_at',
+                    'ub.name as pembeli_nama',
+                    \DB::raw("COALESCE(pj.nama_toko, up.name, '-') as nama_toko"),
+                ]);
+
+            if ($aduanStatusCol) $aduansQuery->addSelect("a.$aduanStatusCol as status_aduan");
+            if ($orderKodeCol)   $aduansQuery->addSelect("o.$orderKodeCol as kode_order");
+
+            if (!empty($penjualId)) {
+                $aduansQuery->where(function ($w) use ($penjualId) {
+                    $w->where('o.penjual_id', $penjualId)
+                    ->orWhere('pj.user_id', $penjualId);
+                });
+            }
+
+            if (!empty($status)) {
+                if ($aduanStatusCol) $aduansQuery->where("a.$aduanStatusCol", $status);
+                else $aduansQuery->where("o.$orderStatusCol", $status);
+            }
+
+            if (!empty($start)) $aduansQuery->whereDate('a.created_at', '>=', $start);
+            if (!empty($end))   $aduansQuery->whereDate('a.created_at', '<=', $end);
+
+            if ($q !== '') {
+                $aduansQuery->where(function ($w) use ($q, $orderKodeCol) {
+                    $w->where('a.judul', 'like', "%{$q}%")
+                    ->orWhere('ub.name', 'like', "%{$q}%")
+                    ->orWhere('pj.nama_toko', 'like', "%{$q}%")
+                    ->orWhere('up.name', 'like', "%{$q}%");
+                    if ($orderKodeCol) $w->orWhere("o.$orderKodeCol", 'like', "%{$q}%");
+                });
+            }
+
+            $aduans = $aduansQuery
+                ->orderByDesc('a.created_at')
+                ->paginate(10)
+                ->withQueryString();
+        }
+
+        return view('admin.transaksi', [
+            'tab' => $tab,
+            'q' => $q,
+
+            'penjualId' => $penjualId,
+            'status' => $status,
+            'start' => $start,
+            'end' => $end,
+
+            'penjualList' => $penjualList,
+
+            'orders' => $orders,
+            'aduans' => $aduans,
+
+            'hasOrderKode' => (bool) $orderKodeCol,
+            'hasOrderTotal' => (bool) $orderTotalCol,
+            'hasAduanStatus' => (bool) $aduanStatusCol,
+        ]);
+    }
+
+    public function showAduan(Request $request, $id)
+    {
+        // kolom status order (anti beda penamaan)
+        if (\Schema::hasColumn('orders', 'status_pesanan')) $orderStatusCol = 'status_pesanan';
+        elseif (\Schema::hasColumn('orders', 'status_pesanna')) $orderStatusCol = 'status_pesanna';
+        else $orderStatusCol = 'status_pesanan';
+
+        $orderKodeCol = \Schema::hasColumn('orders', 'kode_order') ? 'kode_order' : null;
+
+        // cek kolom aduan beneran ada
+        $hasBukti             = \Schema::hasColumn('aduans', 'bukti');
+        $hasStatusAduan       = \Schema::hasColumn('aduans', 'status_aduan');
+        $hasCatatanAdmin      = \Schema::hasColumn('aduans', 'catatan_admin');
+        $hasTglCatatanAdmin   = \Schema::hasColumn('aduans', 'tgl_catatan_admin');
+        $hasCatatanPenjual    = \Schema::hasColumn('aduans', 'catatan_penjual');
+        $hasTglCatatanPenjual = \Schema::hasColumn('aduans', 'tgl_catatan_penjual');
+
+        $q = \DB::table('aduans as a')
+            ->join('orders as o', 'o.id', '=', 'a.order_id')
+            ->leftJoin('users as ub', 'ub.id', '=', 'a.user_id')
+            ->leftJoin('penjuals as pj', 'pj.user_id', '=', 'o.penjual_id')
+            ->where('a.id', $id)
+            ->select([
+                'a.id',
+                'a.order_id',
+                'a.user_id',
+                'a.penjual_id',
+                'a.judul',
+                'a.deskripsi',
+                'a.created_at',
+                "o.$orderStatusCol as status_pesanan",
+                'ub.name as pembeli_nama',
+                \DB::raw("COALESCE(pj.nama_toko, '-') as nama_toko"),
+            ]);
+
+        if ($orderKodeCol) $q->addSelect("o.$orderKodeCol as kode_order");
+
+        if ($hasBukti)             $q->addSelect('a.bukti');
+        if ($hasStatusAduan)       $q->addSelect('a.status_aduan');
+        if ($hasCatatanAdmin)      $q->addSelect('a.catatan_admin');
+        if ($hasTglCatatanAdmin)   $q->addSelect('a.tgl_catatan_admin');
+        if ($hasCatatanPenjual)    $q->addSelect('a.catatan_penjual');
+        if ($hasTglCatatanPenjual) $q->addSelect('a.tgl_catatan_penjual');
+
+        $aduan = $q->first();
+        abort_if(!$aduan, 404);
+
+        $logs = \DB::table('order_status_logs')
+            ->where('order_id', $aduan->order_id)
+            ->orderBy('created_at')
+            ->get();
+
+        return view('admin.aduan_show', compact('aduan', 'logs'));
+    }
+
+
+    public function updateStatusAduan(Request $request, $id)
+    {
+        $request->validate([
+            'status_aduan' => 'required|in:menunggu,diproses,selesai,dibatalkan',
+        ]);
+
+        \DB::table('aduans')
+            ->where('id', $id)
+            ->update([
+                'status_aduan' => $request->status_aduan,
+                'updated_at' => now(),
+            ]);
+
+        return back()->with('success', 'Status aduan diperbarui.');
+    }
+
+    public function tanggapiAduan(Request $request, $id)
+    {
+        $request->validate([
+            'catatan_admin' => 'required|string|max:2000',
+        ]);
+
+        \DB::table('aduans')
+            ->where('id', $id)
+            ->update([
+                'catatan_admin' => $request->catatan_admin,
+                'tgl_catatan_admin' => now(),
+                'updated_at' => now(),
+            ]);
+
+        return back()->with('success', 'Catatan admin berhasil disimpan.');
+    }
+
+
 
 }
