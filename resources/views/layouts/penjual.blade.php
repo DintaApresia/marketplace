@@ -73,6 +73,41 @@
         @php
             $active = 'bg-slate-700 text-white font-semibold';
             $normal = 'text-slate-300 hover:bg-slate-800 hover:text-white';
+
+            // =========================
+            // BADGE PESANAN MASUK (ONGOING)
+            // menunggu / dikemas / dikirim (selesai tidak dihitung)
+            // =========================
+            $pesananMasukCount = 0;
+
+            try {
+                $userIdPenjual = auth()->id();
+
+                // cari penjual_id yang dipakai di orders:
+                // - bisa user_id (auth()->id())
+                // - atau penjuals.id (kalau sistem lama nyimpan begitu)
+                $penjualModel = auth()->user()->penjual ?? null;
+                $penjualIds = collect([$userIdPenjual]);
+
+                if ($penjualModel && !empty($penjualModel->id)) {
+                    $penjualIds->push((int)$penjualModel->id);
+                }
+                $penjualIds = $penjualIds->filter()->unique()->values();
+
+                // tentukan kolom status yang dipakai
+                $statusCol = \Illuminate\Support\Facades\Schema::hasColumn('orders', 'status_pesanan')
+                    ? 'status_pesanan'
+                    : (\Illuminate\Support\Facades\Schema::hasColumn('orders', 'status') ? 'status' : null);
+
+                if ($statusCol) {
+                    $pesananMasukCount = \Illuminate\Support\Facades\DB::table('orders')
+                        ->whereIn('penjual_id', $penjualIds->all())
+                        ->whereIn($statusCol, ['menunggu', 'dikemas', 'dikirim'])
+                        ->count();
+                }
+            } catch (\Throwable $e) {
+                $pesananMasukCount = 0;
+            }
         @endphp
 
         {{-- MENU --}}
@@ -92,9 +127,20 @@
                 📦 <span>Produk Saya</span>
             </a>
 
+            {{-- ✅ PESANAN MASUK + BADGE --}}
             <a href="{{ route('penjual.orders.masuk') }}"
                class="flex items-center gap-3 px-3 py-2 rounded-md {{ request()->routeIs('penjual.orders.masuk') ? $active : $normal }}">
-                🧾 <span>Pesanan Masuk</span>
+                <span class="relative">
+                    🧾
+                    @if(($pesananMasukCount ?? 0) > 0)
+                        <span class="absolute -top-2 -right-2 min-w-[18px] h-[18px]
+                                     px-1 rounded-full bg-red-500 text-white text-[10px]
+                                     leading-[18px] text-center font-semibold">
+                            {{ $pesananMasukCount }}
+                        </span>
+                    @endif
+                </span>
+                <span>Pesanan Masuk</span>
             </a>
 
             <a href="{{ route('penjual.laporan') }}"

@@ -67,14 +67,44 @@
     // =========================
     // STATUS + TIMESTAMP + LOGS
     // =========================
-    $status = $order->status_pesanan ?? 'menunggu';
-    $logs   = $order->statusLogs ?? collect();
 
-    $tsMenunggu = optional($logs->firstWhere('status','menunggu'))->created_at;
-    $tsDikemas  = optional($logs->firstWhere('status','dikemas'))->created_at;
-    $tsDikirim  = optional($logs->firstWhere('status','dikirim'))->created_at;
-    $tsSelesai  = optional($logs->firstWhere('status','selesai'))->created_at;
-    $tsDitolak  = optional($logs->firstWhere('status','ditolak'))->created_at;
+    // Support status lama dari DB (pending/diproses/dibatalkan)
+    $rawStatus = $order->status_pesanan ?? 'pending';
+    $mapToUi = [
+      'pending'    => 'menunggu',
+      'diproses'   => 'dikemas',
+      'dibatalkan' => 'ditolak',
+    ];
+    $status = $mapToUi[$rawStatus] ?? $rawStatus;
+
+    $logs = $order->statusLogs ?? collect();
+
+    $orderCreated = $order->created_at ?? null;
+    $orderUpdated = $order->updated_at ?? null;
+
+    // helper ambil ts dari logs (support ui + alias db lama)
+    $firstTs = function($uiStatus, $dbAlias = null) use ($logs) {
+      $ts = optional($logs->firstWhere('status', $uiStatus))->created_at;
+      if ($ts) return $ts;
+      if ($dbAlias) return optional($logs->firstWhere('status', $dbAlias))->created_at;
+      return null;
+    };
+
+    $tsMenunggu = $firstTs('menunggu', 'pending');
+    $tsDikemas  = $firstTs('dikemas',  'diproses');
+    $tsDikirim  = $firstTs('dikirim',  null);
+    $tsSelesai  = $firstTs('selesai',  null);
+    $tsDitolak  = $firstTs('ditolak',  'dibatalkan');
+
+    // Fallback untuk order lama yang belum punya order_status_logs
+    if ($logs->isEmpty()) {
+      $tsMenunggu = $orderCreated;
+
+      $tsDikemas = in_array($status, ['dikemas','dikirim','selesai','ditolak']) ? $orderUpdated : null;
+      $tsDikirim = in_array($status, ['dikirim','selesai']) ? $orderUpdated : null;
+      $tsSelesai = ($status === 'selesai') ? $orderUpdated : null;
+      $tsDitolak = ($status === 'ditolak') ? $orderUpdated : null;
+    }
 
     $canEdit = in_array($status, ['menunggu','dikemas','dikirim']);
 
@@ -86,11 +116,12 @@
       'ditolak'  => 'bg-red-200 text-red-900 border border-red-300',
       default    => 'bg-gray-100 text-gray-700 border border-gray-200',
     };
+
+    // status pembayaran (sesuai migration)
+    $statusBayar = $order->status_pembayaran ?? 'belum_bayar';
+    $metode = $order->metode_pembayaran ?? '-';
   @endphp
 
-  {{-- GRID: KIRI (detail+rating) | KANAN (status+timeline+aduan) --}}
-  {{-- Dibuat lebih rapi: kanan dibuat "sticky" + scroll internal supaya tidak bikin halaman terasa kepanjangan,
-      dan kiri diisi ringkasan total agar tidak terasa kosong. Fungsionalitas tidak diubah. --}}
   <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
 
     {{-- =========================
@@ -98,7 +129,7 @@
     ========================= --}}
     <div class="lg:col-span-3 space-y-4">
 
-      {{-- RINGKASAN ORDER (biar kiri ga kosong) --}}
+      {{-- RINGKASAN ORDER --}}
       @php
         $totalSeller = 0;
         foreach ($itemsSeller as $it) {
@@ -108,7 +139,6 @@
           $subTmp    = (int) ($it->subtotal ?? ($hargaTmp * $qtyTmp));
           $totalSeller += $subTmp;
         }
-        $metode = $order->metode_pembayaran ?? '-';
       @endphp
 
       <div class="bg-white rounded-lg shadow p-4">
@@ -134,6 +164,34 @@
           <div class="border rounded-lg p-3">
             <div class="text-xs text-gray-500">Total (produk kamu)</div>
             <div class="font-semibold text-gray-800 mt-0.5">Rp {{ number_format($totalSeller, 0, ',', '.') }}</div>
+          </div>
+        </div>
+
+        {{-- STATUS PEMBAYARAN (PENJUAL BISA UBAH) --}}
+        <div class="mt-3 border-t pt-3">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="text-xs text-gray-500">Status Pembayaran</div>
+              <div class="text-sm text-gray-700">Perbarui status pembayaran untuk order ini.</div>
+            </div>
+
+            <form action="{{ route('penjual.orders.status.pembayaran', ['order' => $order->id]) }}"
+                  method="POST"
+                  class="flex items-center gap-2">
+              @csrf
+              <select name="status_pembayaran" class="text-sm border rounded-md px-3 py-1.5">
+                <option value="belum_bayar" {{ $statusBayar === 'belum_bayar' ? 'selected' : '' }}>Belum Bayar</option>
+                <option value="menunggu"   {{ $statusBayar === 'menunggu' ? 'selected' : '' }}>Menunggu</option>
+                <option value="dibayar"    {{ $statusBayar === 'dibayar' ? 'selected' : '' }}>Dibayar</option>
+                <option value="gagal"      {{ $statusBayar === 'gagal' ? 'selected' : '' }}>Gagal</option>
+                <option value="dibatalkan" {{ $statusBayar === 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
+              </select>
+
+              <button type="submit"
+                      class="px-3 py-1.5 bg-gray-900 text-white text-sm rounded-md hover:bg-gray-800">
+                Simpan
+              </button>
+            </form>
           </div>
         </div>
 
@@ -258,7 +316,7 @@
           </table>
         </div>
 
-        {{-- SECTION RATING DI BAWAH TABEL (MASIH DALAM CARD YANG SAMA) --}}
+        {{-- SECTION RATING DI BAWAH TABEL --}}
         <div class="border-t">
           <div class="px-5 py-4">
             <div class="font-semibold text-gray-800">Rating & Ulasan</div>
@@ -349,12 +407,10 @@
 
     {{-- =========================
         KANAN: STATUS + TIMELINE + ADUAN
-        Dibuat sticky + scroll internal agar tidak "kepanjangan"
     ========================= --}}
     <div class="lg:col-span-2 space-y-4 lg:sticky lg:top-6">
       <div class="space-y-4 max-h-[calc(100vh-6.5rem)] overflow-auto pr-1">
 
-        {{-- STATUS + TIMESTAMP + TIMELINE --}}
         <div class="bg-white rounded-lg shadow p-4">
           <div class="flex items-start justify-between gap-3">
             <div>
@@ -365,7 +421,7 @@
             </div>
 
             @if($canEdit)
-              <form method="POST" action="{{ route('penjual.orders.masuk.status', $order->id) }}" class="flex items-center gap-2">
+              <form method="POST" action="{{ route('penjual.orders.masuk.status', ['order' => $order->id]) }}" class="flex items-center gap-2">
                 @csrf
                 @method('PATCH')
 
@@ -390,44 +446,59 @@
             @endif
           </div>
 
-          {{-- Timestamp per status (lebih rapat) --}}
           <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
             <div class="flex justify-between border rounded-md px-3 py-2">
               <span class="text-gray-600">Menunggu</span>
-              <span class="font-medium text-gray-800">{{ $tsMenunggu ? $tsMenunggu->format('d M Y, H:i') : '—' }}</span>
+              <span class="font-medium text-gray-800">{{ $tsMenunggu ? \Carbon\Carbon::parse($tsMenunggu)->format('d M Y, H:i') : '—' }}</span>
             </div>
             <div class="flex justify-between border rounded-md px-3 py-2">
               <span class="text-gray-600">Dikemas</span>
-              <span class="font-medium text-gray-800">{{ $tsDikemas ? $tsDikemas->format('d M Y, H:i') : '—' }}</span>
+              <span class="font-medium text-gray-800">{{ $tsDikemas ? \Carbon\Carbon::parse($tsDikemas)->format('d M Y, H:i') : '—' }}</span>
             </div>
             <div class="flex justify-between border rounded-md px-3 py-2">
               <span class="text-gray-600">Dikirim</span>
-              <span class="font-medium text-gray-800">{{ $tsDikirim ? $tsDikirim->format('d M Y, H:i') : '—' }}</span>
+              <span class="font-medium text-gray-800">{{ $tsDikirim ? \Carbon\Carbon::parse($tsDikirim)->format('d M Y, H:i') : '—' }}</span>
             </div>
             <div class="flex justify-between border rounded-md px-3 py-2">
               <span class="text-gray-600">Selesai</span>
-              <span class="font-medium text-gray-800">{{ $tsSelesai ? $tsSelesai->format('d M Y, H:i') : '—' }}</span>
+              <span class="font-medium text-gray-800">{{ $tsSelesai ? \Carbon\Carbon::parse($tsSelesai)->format('d M Y, H:i') : '—' }}</span>
             </div>
             <div class="flex justify-between border rounded-md px-3 py-2 sm:col-span-2">
               <span class="text-gray-600">Ditolak</span>
-              <span class="font-medium text-gray-800">{{ $tsDitolak ? $tsDitolak->format('d M Y, H:i') : '—' }}</span>
+              <span class="font-medium text-gray-800">{{ $tsDitolak ? \Carbon\Carbon::parse($tsDitolak)->format('d M Y, H:i') : '—' }}</span>
             </div>
           </div>
 
-          {{-- Timeline (dibatasi tinggi biar ga memanjang) --}}
           <div class="mt-4">
             <div class="text-sm font-semibold text-gray-800 mb-2">Timeline</div>
 
             @if($logs->isEmpty())
-              <div class="text-sm text-gray-500">Belum ada riwayat status.</div>
+              <ol class="space-y-2 max-h-40 overflow-auto pr-1">
+                <li class="flex items-start gap-3">
+                  <div class="mt-1 w-2.5 h-2.5 rounded-full bg-gray-400"></div>
+                  <div class="text-sm">
+                    <div class="font-medium text-gray-800">
+                      {{ ucfirst($status) }}
+                      <span class="text-xs text-gray-500">
+                        • {{ $orderUpdated ? \Carbon\Carbon::parse($orderUpdated)->format('d M Y, H:i') : '—' }}
+                      </span>
+                    </div>
+                    <div class="text-xs text-gray-400">oleh sistem</div>
+                    <div class="text-xs text-gray-500">Riwayat status belum tersedia untuk order lama.</div>
+                  </div>
+                </li>
+              </ol>
             @else
               <ol class="space-y-2 max-h-40 overflow-auto pr-1">
                 @foreach($logs as $log)
+                  @php
+                    $st = $mapToUi[$log->status] ?? $log->status;
+                  @endphp
                   <li class="flex items-start gap-3">
                     <div class="mt-1 w-2.5 h-2.5 rounded-full bg-gray-400"></div>
                     <div class="text-sm">
                       <div class="font-medium text-gray-800">
-                        {{ ucfirst($log->status) }}
+                        {{ ucfirst($st) }}
                         <span class="text-xs text-gray-500">• {{ $log->created_at->format('d M Y, H:i') }}</span>
                       </div>
 
@@ -465,7 +536,7 @@
           @else
             <div class="mt-4 space-y-4">
 
-              {{-- PESAN PEMBELI (rata kiri) --}}
+              {{-- PESAN PEMBELI --}}
               <div class="text-left">
                 <div class="max-w-full bg-gray-100 rounded-2xl px-4 py-3 text-sm text-gray-800">
                   <div class="text-xs text-gray-500 mb-1">
@@ -474,7 +545,6 @@
                   <div class="font-semibold">{{ $aduan->judul }}</div>
                   <div class="mt-1 whitespace-pre-line">{{ $aduan->deskripsi }}</div>
 
-                  {{-- Bukti --}}
                   @if(!empty($aduan->bukti))
                     @php
                       $imgsAduan = is_array($aduan->bukti) ? $aduan->bukti : json_decode($aduan->bukti, true);
@@ -506,7 +576,7 @@
                 </div>
               @endif
 
-              {{-- BALASAN PENJUAL (yang sudah ada) --}}
+              {{-- BALASAN PENJUAL --}}
               @if(isset($aduan->catatan_penjual) && trim($aduan->catatan_penjual) !== '')
                 <div class="text-left">
                   <div class="max-w-full bg-green-50 border border-green-100 rounded-2xl px-4 py-3 text-sm text-gray-800">
@@ -521,7 +591,7 @@
               {{-- FORM BALAS (PENJUAL) --}}
               @if(!isset($aduan->catatan_penjual) || trim($aduan->catatan_penjual) === '')
                 <div class="border-t pt-3">
-                  <form method="POST" action="{{ route('penjual.orders.aduan.balas', $order->id) }}" class="space-y-2">
+                  <form method="POST" action="{{ route('penjual.orders.aduan.balas', ['order' => $order->id]) }}" class="space-y-2">
                     @csrf
 
                     <label class="text-sm font-medium text-gray-700">Balas Aduan</label>
@@ -558,7 +628,6 @@
 
   </div>
 
-  {{-- KEMBALI --}}
   <div class="mt-4">
     <a href="{{ route('penjual.orders.masuk') }}"
        class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800">

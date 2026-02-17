@@ -407,7 +407,7 @@ class OrderController extends Controller
                     'status_pesanan'    => 'menunggu',
                     'metode_pembayaran' => $request->metode_pembayaran,
                     'status_pembayaran' => $request->metode_pembayaran === 'transfer'
-                                            ? 'menunggu_verifikasi'
+                                            ? 'menunggu'
                                             : 'belum_bayar',
                     'bukti_pembayaran'  => $buktiPath,
                     'catatan'           => $request->catatan,

@@ -80,6 +80,23 @@
                 'ditolak'  => 'Ditolak',
                 default    => ucfirst($status),
               };
+
+              // ============================
+              // ✅ DOT MERAH JIKA ADA ADUAN
+              // DAN BELUM DIBALAS PENJUAL
+              // ============================
+              $hasAduanBelumDibalas = false;
+              try {
+                $hasAduanBelumDibalas = \Illuminate\Support\Facades\DB::table('aduans')
+                  ->where('order_id', $order->id)
+                  ->where(function($q){
+                      $q->whereNull('catatan_penjual')
+                        ->orWhere('catatan_penjual', '=', '');
+                  })
+                  ->exists();
+              } catch (\Throwable $e) {
+                $hasAduanBelumDibalas = false;
+              }
             @endphp
 
             <tr>
@@ -136,7 +153,7 @@
                 Rp {{ number_format((int)($order->total_bayar ?? 0), 0, ',', '.') }}
               </td>
 
-              {{-- STATUS (DIUBAH JADI BADGE SAJA) --}}
+              {{-- STATUS (BADGE) --}}
               <td class="px-4 py-3 whitespace-nowrap">
                 <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold {{ $badgeClass }}">
                   <span class="w-2 h-2 rounded-full
@@ -155,8 +172,13 @@
               {{-- DETAIL --}}
               <td class="px-4 py-3 text-right whitespace-nowrap">
                 <a href="{{ route('penjual.orders.masuk.show', $order->id) }}"
-                   class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+                   class="relative inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-800">
                   Lihat Detail
+
+                  {{-- ✅ DOT MERAH (aduan belum dibalas) --}}
+                  @if($hasAduanBelumDibalas)
+                    <span class="absolute -top-1 -right-2 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
+                  @endif
                 </a>
               </td>
             </tr>

@@ -9,6 +9,55 @@
 
 <body class="bg-gray-100 text-gray-800 overflow-hidden">
 
+@php
+    use Illuminate\Support\Facades\DB;
+    use Illuminate\Support\Facades\Schema;
+
+    // =========================
+    // HITUNG BADGE ANGKA (UI SAJA)
+    // =========================
+
+    // kolom status_pesanan bisa beda2 (jaga-jaga)
+    $orderStatusCol = Schema::hasColumn('orders', 'status_pesanan') ? 'status_pesanan'
+        : (Schema::hasColumn('orders', 'status_pesanna') ? 'status_pesanna'
+        : (Schema::hasColumn('orders', 'status') ? 'status' : null));
+
+    // monitoring transaksi = order yang BELUM SELESAI
+    $countMonitoring = 0;
+    if ($orderStatusCol) {
+        $countMonitoring = DB::table('orders')
+            ->where(function ($q) use ($orderStatusCol) {
+                $q->whereNull($orderStatusCol)
+                  ->orWhereNotIn($orderStatusCol, ['selesai']);
+            })
+            ->count();
+    }
+
+    // manajemen aduan = aduan yang BELUM ditanggapi (status_aduan belum "selesai")
+    $countAduan = 0;
+    if (Schema::hasTable('aduans')) {
+        $aduanStatusCol = Schema::hasColumn('aduans', 'status_aduan') ? 'status_aduan' : null;
+
+        if ($aduanStatusCol) {
+            // tampilkan badge hanya jika belum selesai (kamu bilang kalau admin sudah ubah status_aduan, badge hilang)
+            $countAduan = DB::table('aduans')
+                ->where(function ($q) use ($aduanStatusCol) {
+                    $q->whereNull($aduanStatusCol)
+                      ->orWhereNotIn($aduanStatusCol, ['selesai']);
+                })
+                ->count();
+        }
+    }
+
+    // helper badge (angka merah)
+    $badge = function ($n) {
+        if (!$n || (int)$n <= 0) return '';
+        return '<span class="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold bg-red-600 text-white">'
+            . ((int)$n > 99 ? '99+' : (int)$n)
+            . '</span>';
+    };
+@endphp
+
 {{-- ================= SIDEBAR DESKTOP (MANDEK) ================= --}}
 <aside class="hidden md:flex md:flex-col fixed inset-y-0 left-0 w-64
               bg-gradient-to-b from-gray-900 to-gray-800
@@ -70,16 +119,19 @@
 
             {{-- Submenu: selalu tampil, tapi highlight ikut tab --}}
             <div class="ml-10 space-y-1">
+
                 <a href="{{ route('admin.transaksi.index', ['tab'=>'monitoring']) }}"
-                   class="block px-2 py-1 rounded transition
+                   class="flex items-center justify-between gap-2 px-2 py-1 rounded transition
                    {{ $isTransaksi && $tab==='monitoring' ? $subActive : $subNormal }}">
-                    › Monitoring Transaksi
+                    <span>› Monitoring Transaksi</span>
+                    {!! $isTransaksi && $tab==='monitoring' ? '' : $badge($countMonitoring) !!}
                 </a>
 
                 <a href="{{ route('admin.transaksi.index', ['tab'=>'aduan']) }}"
-                   class="block px-2 py-1 rounded transition
+                   class="flex items-center justify-between gap-2 px-2 py-1 rounded transition
                    {{ $isTransaksi && $tab==='aduan' ? $subActive : $subNormal }}">
-                    › Manajemen Aduan
+                    <span>› Manajemen Aduan</span>
+                    {!! $isTransaksi && $tab==='aduan' ? '' : $badge($countAduan) !!}
                 </a>
 
                 <a href="{{ route('admin.transaksi.index', ['tab'=>'riwayat']) }}"
@@ -157,16 +209,19 @@
 
             {{-- Submenu (selalu tampil) --}}
             <div class="ml-4 space-y-1">
+
                 <a href="{{ route('admin.transaksi.index', ['tab'=>'monitoring']) }}"
-                   class="block px-4 py-1 rounded hover:bg-gray-700
+                   class="flex items-center justify-between gap-2 px-4 py-1 rounded hover:bg-gray-700
                    {{ $isTransaksiMobile && $tabMobile==='monitoring' ? 'text-white font-semibold' : 'text-gray-300' }}">
-                    › Monitoring Transaksi
+                    <span>› Monitoring Transaksi</span>
+                    {!! $isTransaksiMobile && $tabMobile==='monitoring' ? '' : $badge($countMonitoring) !!}
                 </a>
 
                 <a href="{{ route('admin.transaksi.index', ['tab'=>'aduan']) }}"
-                   class="block px-4 py-1 rounded hover:bg-gray-700
+                   class="flex items-center justify-between gap-2 px-4 py-1 rounded hover:bg-gray-700
                    {{ $isTransaksiMobile && $tabMobile==='aduan' ? 'text-white font-semibold' : 'text-gray-300' }}">
-                    › Manajemen Aduan
+                    <span>› Manajemen Aduan</span>
+                    {!! $isTransaksiMobile && $tabMobile==='aduan' ? '' : $badge($countAduan) !!}
                 </a>
 
                 <a href="{{ route('admin.transaksi.index', ['tab'=>'riwayat']) }}"

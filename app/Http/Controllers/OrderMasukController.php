@@ -109,5 +109,29 @@ class OrderMasukController extends Controller
         return back()->with('success', 'Status pesanan diperbarui.');
     }
 
+    public function updateStatusPembayaran(Request $request, $id)
+    {
+        $request->validate([
+            'status_pembayaran' => 'required|in:belum_bayar,menunggu,dibayar,gagal,dibatalkan'
+        ]);
 
+        $order = Order::findOrFail($id);
+
+        // ambil id penjual yang benar:
+        // kalau kamu punya relasi user->penjual, ini yang paling benar
+        $penjualId = optional(auth()->user()->penjual)->id;
+
+        // fallback kalau relasi tidak ada (misal penjual_id memang users.id)
+        if (!$penjualId) {
+            $penjualId = auth()->id();
+        }
+
+        // pastikan order milik penjual yang login
+        abort_unless((int)$order->penjual_id === (int)$penjualId, 403);
+
+        $order->status_pembayaran = $request->status_pembayaran;
+        $order->save();
+
+        return back()->with('success', 'Status pembayaran berhasil diperbarui.');
+    }
 }
